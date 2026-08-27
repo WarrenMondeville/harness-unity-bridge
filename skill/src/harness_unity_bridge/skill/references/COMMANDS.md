@@ -19,7 +19,7 @@ Execute Unity tests in EditMode or PlayMode.
 ### Usage
 
 ```bash
-unity-bridge run-tests [options]
+harness-unity-bridge run-tests [options]
 ```
 
 ### Parameters
@@ -41,7 +41,7 @@ unity-bridge run-tests [options]
 - Filter by test name or namespace
 - Examples:
   - `"MyTests"` - All tests containing "MyTests"
-  - `"MXR.Tests.Auth"` - All tests in the Auth namespace
+  - `"DeepSeekAI.Tests.Auth"` - All tests in the Auth namespace
   - `"LoginTest;LogoutTest"` - Multiple filters (semicolon-separated)
 - Case-sensitive
 - Matches test names using Unity's test filter syntax
@@ -77,11 +77,11 @@ unity-bridge run-tests [options]
     "skipped": 0,
     "failures": [
       {
-        "name": "MXR.Tests.AuthTests.LoginWithInvalidCredentials",
+        "name": "DeepSeekAI.Tests.AuthTests.LoginWithInvalidCredentials",
         "message": "Expected: success\nActual: failure\nat Assets/Tests/AuthTests.cs:45"
       },
       {
-        "name": "MXR.Tests.NetworkTests.TimeoutHandling",
+        "name": "DeepSeekAI.Tests.NetworkTests.TimeoutHandling",
         "message": "NullReferenceException: Object reference not set\nat Assets/Tests/NetworkTests.cs:123"
       }
     ]
@@ -101,7 +101,7 @@ During execution, you may see intermediate `status: "running"` responses with pr
   "progress": {
     "current": 150,
     "total": 410,
-    "currentTest": "MXR.Tests.Player.MovementTest"
+    "currentTest": "DeepSeekAI.Tests.Player.MovementTest"
   },
   "failures": []
 }
@@ -118,11 +118,11 @@ The CLI formats the output for readability:
 Duration: 3.50s
 
 Failed Tests:
-  - MXR.Tests.AuthTests.LoginWithInvalidCredentials
+  - DeepSeekAI.Tests.AuthTests.LoginWithInvalidCredentials
     Expected: success
     Actual: failure
     at Assets/Tests/AuthTests.cs:45
-  - MXR.Tests.NetworkTests.TimeoutHandling
+  - DeepSeekAI.Tests.NetworkTests.TimeoutHandling
     NullReferenceException: Object reference not set
     at Assets/Tests/NetworkTests.cs:123
 ```
@@ -177,19 +177,19 @@ Failed Tests:
 
 ```bash
 # Run all EditMode tests (fast)
-unity-bridge run-tests --mode EditMode
+harness-unity-bridge run-tests --mode EditMode
 
 # Run specific test suite
-unity-bridge run-tests --filter "MXR.Tests.Auth"
+harness-unity-bridge run-tests --filter "DeepSeekAI.Tests.Auth"
 
 # Run multiple test suites
-unity-bridge run-tests --filter "AuthTests;NetworkTests"
+harness-unity-bridge run-tests --filter "AuthTests;NetworkTests"
 
 # Run PlayMode tests with extended timeout
-unity-bridge run-tests --mode PlayMode --timeout 60
+harness-unity-bridge run-tests --mode PlayMode --timeout 60
 
 # Run all tests
-unity-bridge run-tests
+harness-unity-bridge run-tests
 ```
 
 ---
@@ -201,7 +201,7 @@ Trigger Unity script compilation and wait for completion.
 ### Usage
 
 ```bash
-unity-bridge compile [options]
+harness-unity-bridge compile [options]
 ```
 
 ### Parameters
@@ -288,13 +288,13 @@ The command will wait for compilation to complete.
 
 ```bash
 # Basic compilation
-unity-bridge compile
+harness-unity-bridge compile
 
 # With extended timeout for large projects
-unity-bridge compile --timeout 60
+harness-unity-bridge compile --timeout 60
 
 # Cleanup old responses first
-unity-bridge compile --cleanup
+harness-unity-bridge compile --cleanup
 ```
 
 ---
@@ -306,7 +306,7 @@ Force Unity to refresh the asset database, reimporting changed assets.
 ### Usage
 
 ```bash
-unity-bridge refresh [options]
+harness-unity-bridge refresh [options]
 ```
 
 ### Parameters
@@ -388,13 +388,13 @@ Unity will refresh but may report import errors in the console. The command will
 
 ```bash
 # Basic refresh
-unity-bridge refresh
+harness-unity-bridge refresh
 
 # After git operations (pulling changes)
-git pull && unity-bridge refresh
+git pull && harness-unity-bridge refresh
 
 # With extended timeout for large projects
-unity-bridge refresh --timeout 60
+harness-unity-bridge refresh --timeout 60
 ```
 
 ---
@@ -406,7 +406,7 @@ Get current Unity Editor state, including compilation status, play mode, and upd
 ### Usage
 
 ```bash
-unity-bridge get-status
+harness-unity-bridge get-status
 ```
 
 ### Parameters
@@ -496,7 +496,7 @@ Check status before:
 
 ```bash
 # Check current status
-unity-bridge get-status
+harness-unity-bridge get-status
 
 # Wait for compilation to finish (pseudo-code workflow)
 while status.isCompiling:
@@ -514,7 +514,7 @@ Retrieve Unity console logs with filtering options.
 ### Usage
 
 ```bash
-unity-bridge get-console-logs [options]
+harness-unity-bridge get-console-logs [options]
 ```
 
 ### Parameters
@@ -638,20 +638,20 @@ No console logs found
 
 ```bash
 # Get last 20 logs
-unity-bridge get-console-logs --limit 20
+harness-unity-bridge get-console-logs --limit 20
 
 # Get only errors
-unity-bridge get-console-logs --filter Error
+harness-unity-bridge get-console-logs --filter Error
 
 # Get only warnings
-unity-bridge get-console-logs --filter Warning
+harness-unity-bridge get-console-logs --filter Warning
 
 # Get last 5 logs of all types
-unity-bridge get-console-logs --limit 5
+harness-unity-bridge get-console-logs --limit 5
 
 # Check for errors after compilation
-unity-bridge compile
-unity-bridge get-console-logs --filter Error --limit 10
+harness-unity-bridge compile
+harness-unity-bridge get-console-logs --filter Error --limit 10
 ```
 
 ---
@@ -662,11 +662,11 @@ unity-bridge get-console-logs --filter Error --limit 10
 
 ```bash
 # Check if compiling
-status=$(unity-bridge get-status)
+status=$(harness-unity-bridge get-status)
 
 # If ready, run tests
 if [[ $status == *"✓ Ready"* ]]; then
-    unity-bridge run-tests
+    harness-unity-bridge run-tests
 else
     echo "Waiting for compilation..."
 fi
@@ -676,11 +676,11 @@ fi
 
 ```bash
 # Run tests
-unity-bridge run-tests
+harness-unity-bridge run-tests
 
 # If failed (exit code 1), get error logs
 if [ $? -ne 0 ]; then
-    unity-bridge get-console-logs --filter Error --limit 10
+    harness-unity-bridge get-console-logs --filter Error --limit 10
 fi
 ```
 
@@ -688,16 +688,16 @@ fi
 
 ```bash
 # 1. Check status
-unity-bridge get-status
+harness-unity-bridge get-status
 
 # 2. Compile
-unity-bridge compile
+harness-unity-bridge compile
 
 # 3. Run tests
-unity-bridge run-tests
+harness-unity-bridge run-tests
 
 # 4. Check for errors
-unity-bridge get-console-logs --filter Error
+harness-unity-bridge get-console-logs --filter Error
 ```
 
 ### After Git Pull Workflow
@@ -707,13 +707,13 @@ unity-bridge get-console-logs --filter Error
 git pull
 
 # Refresh assets
-unity-bridge refresh
+harness-unity-bridge refresh
 
 # Wait for compilation
 # (Unity will auto-compile after refresh)
 
 # Run tests
-unity-bridge run-tests --mode EditMode
+harness-unity-bridge run-tests --mode EditMode
 ```
 
 ---
@@ -734,7 +734,7 @@ All commands return standard exit codes for shell integration:
 #!/bin/bash
 
 # Run tests and check exit code
-unity-bridge run-tests --mode EditMode
+harness-unity-bridge run-tests --mode EditMode
 
 case $? in
     0)
@@ -807,7 +807,7 @@ If commands frequently timeout:
 **"Unity Editor not detected"**
 - Unity is not running
 - Unity project is not open
-- `.unity-bridge/` directory doesn't exist (package not installed)
+- `.harness-unity-bridge/` directory doesn't exist (package not installed)
 
 **Solution:** Open Unity with your project and ensure package is installed.
 
@@ -849,7 +849,7 @@ If commands frequently timeout:
 ### Linux
 - File paths use forward slashes
 - Case-sensitive file systems
-- May need to adjust file permissions on `.unity-bridge/` directory
+- May need to adjust file permissions on `.harness-unity-bridge/` directory
 
 ---
 

@@ -1,26 +1,26 @@
-# Agent Guidelines for Claude Unity Bridge
+# Agent Guidelines for Harness Unity Bridge
 
 ## Project Overview
 
-This is a Unity package (`com.mxr.claude-bridge`) that enables Claude Code to control Unity Editor operations via a file-based protocol. The package has two components:
+This is a Unity package (`com.deepseekai.harness-unity-bridge`) that enables DeepSeek Harness to control Unity Editor operations via a file-based protocol. The package has two components:
 
 1. **Unity Package** - C# code that runs in Unity Editor, polls for commands, executes them
-2. **Claude Code Skill** - Python script + documentation that Claude uses to send commands
+2. **DeepSeek Harness Skill** - Python script + documentation that DeepSeek Harness uses to send commands
 
-**Key Architecture Decision**: We use a deterministic Python script instead of in-context implementation because it guarantees consistent UUID generation, file handling, polling, and error handling across all Claude sessions.
+**Key Architecture Decision**: We use a deterministic Python script instead of in-context implementation because it guarantees consistent UUID generation, file handling, polling, and error handling across all DeepSeek Harness sessions.
 
 ## Project Structure
 
 ### Unity Package (package/)
 - `Editor/` - C# command implementations for Unity
-  - `ClaudeBridge.cs` - Main coordinator, command dispatcher
+  - `HarnessBridge.cs` - Main coordinator, command dispatcher
   - `Commands/` - Individual command implementations (ICommand interface)
   - `Models/` - Request/Response data structures
 - `Documentation/` - Package documentation
 - `README.md` - Package documentation and protocol specification
 
-### Claude Code Skill (skill/)
-- `scripts/cli.py` - **THE CORE** - Handles all command execution
+### DeepSeek Harness Skill (skill/)
+- `src/harness_unity_bridge/cli.py` - **THE CORE** - Handles all command execution
 - `SKILL.md` - Main documentation with YAML frontmatter
 - `references/` - Extended documentation
   - `COMMANDS.md` - Complete command reference
@@ -58,20 +58,20 @@ cd skill
 pytest tests/test_cli.py -v
 
 # Run with coverage
-pytest tests/test_cli.py --cov=scripts --cov-report=term-missing
+pytest tests/test_cli.py --cov=src/harness_unity_bridge --cov-report=term-missing
 
 # Test script help
-python3 scripts/cli.py --help
+python3 src/harness_unity_bridge/cli.py --help
 ```
 
 ### Testing with Unity
 ```bash
 # These require Unity Editor to be running
-python3 skill/scripts/cli.py get-status
-python3 skill/scripts/cli.py compile
-python3 skill/scripts/cli.py run-tests --mode EditMode
-python3 skill/scripts/cli.py get-console-logs --limit 10 --filter Error
-python3 skill/scripts/cli.py refresh
+python3 skill/src/harness_unity_bridge/cli.py get-status
+python3 skill/src/harness_unity_bridge/cli.py compile
+python3 skill/src/harness_unity_bridge/cli.py run-tests --mode EditMode
+python3 skill/src/harness_unity_bridge/cli.py get-console-logs --limit 10 --filter Error
+python3 skill/src/harness_unity_bridge/cli.py refresh
 ```
 
 ### Git Workflow
@@ -80,7 +80,7 @@ python3 skill/scripts/cli.py refresh
 git status
 
 # Typical commit structure for features
-git add skill/scripts/*.py          # Core implementation
+git add skill/src/harness_unity_bridge/*.py          # Core implementation
 git commit -m "feat: Add feature"
 
 git add skill/*.md skill/references/ README.md  # Documentation
@@ -92,7 +92,7 @@ git commit -m "test: Add tests and CI"
 
 ## Coding Style
 
-### Python (skill/scripts/cli.py)
+### Python (skill/src/harness_unity_bridge/cli.py)
 - PEP 8 compliant
 - 100-character line limit
 - Type hints where helpful
@@ -105,9 +105,9 @@ git commit -m "test: Add tests and CI"
 - Public members: `PascalCase`
 - Private fields: `_camelCase` with underscore prefix
 - Interfaces: `ICommand`, `ICallbacks`
-- Namespaces: `MXR.ClaudeBridge.*`
+- Namespaces: `DeepSeekAI.HarnessBridge.*`
 - Use `[Serializable]` for data models
-- Always log with `[ClaudeBridge]` prefix
+- Always log with `[HarnessBridge]` prefix
 
 ### Markdown
 - Use GitHub-flavored markdown
@@ -134,7 +134,7 @@ git commit -m "test: Add tests and CI"
   - Focus on state transitions, error handling, response construction
   - Avoid testing that mocks return what you set up
 - **Test Infrastructure**:
-  - `Tests/Editor/MXR.ClaudeBridge.Tests.Editor.asmdef` - Test assembly definition
+  - `Tests/Editor/DeepSeekAI.HarnessBridge.Tests.Editor.asmdef` - Test assembly definition
   - `Tests/Editor/TestHelpers/CommandTestFixture.cs` - Base class for command tests
   - `Tests/Editor/TestHelpers/ResponseCapture.cs` - Utility to capture callbacks
 - **Phased Rollout** (matching Python suite quality - 22 tests, 95% coverage):
@@ -142,7 +142,7 @@ git commit -m "test: Add tests and CI"
   - ✅ Phase 2: RefreshCommand (7 tests) + model tests (11 tests) - COMPLETE
   - ✅ Phase 3: CompileCommand async tests (9 tests) - COMPLETE
   - ✅ Phase 4: RunTestsCommand (17 tests) + GetConsoleLogsCommand (16 tests) - COMPLETE
-  - ⏳ Phase 5: ClaudeBridge dispatcher tests (~15 tests)
+  - ⏳ Phase 5: HarnessBridge dispatcher tests (~15 tests)
   - ⏳ Phase 6: CI/CD integration (deferred - licensing discussion needed)
 
 ### Test-Driven Development
@@ -150,7 +150,7 @@ When modifying `cli.py`:
 1. Write/update pytest tests first
 2. Implement changes
 3. Run `pytest tests/test_cli.py -v`
-4. Check coverage: `pytest --cov=scripts`
+4. Check coverage: `pytest --cov=src/harness_unity_bridge`
 5. All tests must pass before committing
 
 ## Critical Guidelines
@@ -218,24 +218,24 @@ When modifying `cli.py`:
 ## File-Based Protocol (Critical Understanding)
 
 ### How It Works
-1. **Python script** writes `UUID + action + params` to `.unity-bridge/command.json`
+1. **Python script** writes `UUID + action + params` to `.harness-unity-bridge/command.json`
 2. **Unity Editor** polls for `command.json` via `EditorApplication.update`
 3. **Unity** deletes command file, executes command
-4. **Unity** writes result to `.unity-bridge/response-{UUID}.json`
+4. **Unity** writes result to `.harness-unity-bridge/response-{UUID}.json`
 5. **Python script** polls for response file with exponential backoff
 6. **Python script** reads response, formats output, deletes response file
 
 ### Why File-Based?
 - No network configuration needed
 - No port conflicts
-- Multi-project support (each project has own `.unity-bridge/` dir)
+- Multi-project support (each project has own `.harness-unity-bridge/` dir)
 - Works across firewalls
 - Simple debugging (just inspect JSON files)
 
 ### File Location Rules
-- **Per-Project**: `.unity-bridge/` at Unity project root
+- **Per-Project**: `.harness-unity-bridge/` at Unity project root
 - **Not Global**: Each Unity project has its own directory
-- **Gitignored**: `.unity-bridge/` should be in `.gitignore`
+- **Gitignored**: `.harness-unity-bridge/` should be in `.gitignore`
 - **Cleanup**: Old responses cleaned up automatically (1 hour max age)
 
 ## Extending with Custom Commands
@@ -259,7 +259,7 @@ When modifying `cli.py`:
    }
    ```
 
-2. **Register in ClaudeBridge.cs**:
+2. **Register in HarnessBridge.cs**:
    ```csharp
    Commands = new Dictionary<string, ICommand> {
        // ... existing commands
@@ -269,7 +269,7 @@ When modifying `cli.py`:
 
 3. **Test with Python script**:
    ```bash
-   python3 skill/scripts/cli.py your-command
+   python3 skill/src/harness_unity_bridge/cli.py your-command
    ```
 
 4. **Optional: Add Python Formatter** in `cli.py`:
@@ -332,12 +332,12 @@ test: Add pytest tests for scene validation
    ```bash
    # Create Editor/Commands/YourCommand.cs
    # Implement ICommand interface
-   # Register in ClaudeBridge.cs
+   # Register in HarnessBridge.cs
    ```
 
 2. **Add Python formatter (optional)**
    ```bash
-   # Edit skill/scripts/cli.py
+   # Edit skill/src/harness_unity_bridge/cli.py
    # Add format_your_command() function
    # Update format_response() dispatch
    ```
@@ -358,7 +358,7 @@ test: Add pytest tests for scene validation
 
 5. **Commit in logical chunks**
    ```bash
-   git add Editor/ skill/scripts/
+   git add Editor/ skill/src/harness_unity_bridge/
    git commit -m "feat: Add your-command implementation"
 
    git add skill/*.md skill/references/ README.md
@@ -372,24 +372,24 @@ test: Add pytest tests for scene validation
 
 1. **Check Unity is running**
    ```bash
-   python3 skill/scripts/cli.py get-status --verbose
+   python3 skill/src/harness_unity_bridge/cli.py get-status --verbose
    ```
 
 2. **Inspect command/response files**
    ```bash
-   ls -la .unity-bridge/
-   cat .unity-bridge/command.json
-   cat .unity-bridge/response-*.json
+   ls -la .harness-unity-bridge/
+   cat .harness-unity-bridge/command.json
+   cat .harness-unity-bridge/response-*.json
    ```
 
 3. **Check Unity Console**
-   - Look for `[ClaudeBridge]` log messages
+   - Look for `[HarnessBridge]` log messages
    - Command processing logged on pickup
    - Errors logged with details
 
 4. **Test with timeout and verbose**
    ```bash
-   python3 skill/scripts/cli.py compile --timeout 60 --verbose
+   python3 skill/src/harness_unity_bridge/cli.py compile --timeout 60 --verbose
    ```
 
 ## Architecture Patterns
@@ -437,7 +437,7 @@ test: Add pytest tests for scene validation
 ## Security & Safety
 
 ### File System Safety
-- Only write to `.unity-bridge/` directory
+- Only write to `.harness-unity-bridge/` directory
 - Use atomic writes (temp file + replace)
 - Handle file locking gracefully
 - Clean up old files automatically
@@ -457,7 +457,7 @@ test: Add pytest tests for scene validation
 ## Troubleshooting Guide
 
 ### "Unity Editor not detected"
-**Cause**: `.unity-bridge/` directory doesn't exist
+**Cause**: `.harness-unity-bridge/` directory doesn't exist
 **Fix**: Ensure Unity Editor is open with project loaded and package installed
 
 ### "Command timed out after 30s"
@@ -527,7 +527,7 @@ The Unity package now has comprehensive test coverage:
 - Mock implementations for Unity Test Runner APIs
 
 **Remaining Phases:**
-- Phase 5: ClaudeBridge dispatcher with file system mocking
+- Phase 5: HarnessBridge dispatcher with file system mocking
 - Phase 6: CI/CD integration (requires Unity license strategy discussion)
 
 **Testing Philosophy:**
@@ -552,21 +552,21 @@ The Unity package now has comprehensive test coverage:
 ### Most Common Commands
 ```bash
 # Get Unity status
-python3 skill/scripts/cli.py get-status
+python3 skill/src/harness_unity_bridge/cli.py get-status
 
 # Run EditMode tests
-python3 skill/scripts/cli.py run-tests --mode EditMode
+python3 skill/src/harness_unity_bridge/cli.py run-tests --mode EditMode
 
 # Check for errors
-python3 skill/scripts/cli.py get-console-logs --filter Error
+python3 skill/src/harness_unity_bridge/cli.py get-console-logs --filter Error
 
 # Test Python script
 cd skill && pytest tests/test_cli.py -v
 ```
 
 ### Key Files to Know
-- `skill/scripts/cli.py` - THE deterministic command executor
-- `Editor/ClaudeBridge.cs` - Unity command dispatcher
+- `skill/src/harness_unity_bridge/cli.py` - THE deterministic command executor
+- `Editor/HarnessBridge.cs` - Unity command dispatcher
 - `Editor/Models/CommandResponse.cs` - Response structure
 - `skill/tests/test_cli.py` - Python test suite
 - `skill/SKILL.md` - User-facing documentation

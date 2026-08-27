@@ -1,8 +1,8 @@
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace MXR.ClaudeBridge.Tests.Models {
+namespace DeepSeekAI.HarnessBridge.Tests.Models {
     /// <summary>
     /// Tests for CommandRequest serialization/deserialization.
     /// Focus: Verify JSON serialization works correctly for file-based protocol

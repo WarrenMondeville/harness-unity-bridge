@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Claude Unity Bridge package will be documented in this file.
+All notable changes to the Harness Unity Bridge package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Restrict `.unity-bridge/` directory and file permissions to owner-only on POSIX systems
+- Restrict `.harness-unity-bridge/` directory and file permissions to owner-only on POSIX systems
 - Add UUID validation for command IDs to prevent path traversal attacks
 - Verify response ID matches expected command ID to prevent response spoofing
 - Pin GitHub Actions to commit SHAs to prevent supply chain attacks
@@ -80,8 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Dependabot configuration for automated dependency updates (GitHub Actions + pip)
-- `.gitignore` entries for `.unity-bridge/`, `.env`, and secret file patterns
-- CODEOWNERS for `@ManageXR/unity-external` team
+- `.gitignore` entries for `.harness-unity-bridge/`, `.env`, and secret file patterns
+- CODEOWNERS for `@WarrenMondeville`
 
 ### Changed
 
@@ -125,14 +125,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial pre-release of Claude Unity Bridge as a standalone Unity package
-- File-based bridge enabling Claude Code to trigger Unity Editor operations
+- Initial pre-release of Harness Unity Bridge as a standalone Unity package
+- File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations
 - `run-tests` command - Execute EditMode or PlayMode tests with filtering
 - `compile` command - Trigger script compilation
 - `refresh` command - Force asset database refresh
 - `get-status` command - Check editor compilation/update state
 - `get-console-logs` command - Retrieve Unity console output with filtering
-- Multi-project support via per-project `.unity-bridge/` directories
+- Multi-project support via per-project `.harness-unity-bridge/` directories
 - Tools menu with status display and cleanup utilities
 - Zero external dependencies - pure C# implementation
 - Support for Unity 2021.3 and later
@@ -153,11 +153,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor-only package (no runtime impact)
 - Automatic initialization via `[InitializeOnLoad]`
 
-[0.2.1]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.2.1
-[0.2.0]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.2.0
-[0.1.5]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.5
-[0.1.4]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.4
-[0.1.3]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.3
-[0.1.2]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.2
-[0.1.1]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.1
-[0.1.0]: https://github.com/ManageXR/claude-unity-bridge/releases/tag/v0.1.0
+[0.2.1]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.1
+[0.2.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.0
+[0.1.5]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.5
+[0.1.4]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.4
+[0.1.3]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.3
+[0.1.2]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.2
+[0.1.1]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.1
+[0.1.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.0

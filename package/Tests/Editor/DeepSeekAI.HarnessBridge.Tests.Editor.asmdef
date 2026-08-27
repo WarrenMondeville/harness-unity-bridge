@@ -1,8 +1,8 @@
 {
-    "name": "MXR.ClaudeBridge.Tests.Editor",
-    "rootNamespace": "MXR.ClaudeBridge.Tests",
+    "name": "DeepSeekAI.HarnessBridge.Tests.Editor",
+    "rootNamespace": "DeepSeekAI.HarnessBridge.Tests",
     "references": [
-        "MXR.ClaudeBridge",
+        "DeepSeekAI.HarnessBridge",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

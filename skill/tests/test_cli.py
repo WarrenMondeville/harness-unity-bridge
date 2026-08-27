@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from claude_unity_bridge.cli import (
+from harness_unity_bridge.cli import (
     format_response,
     format_test_results,
     format_compile_results,
@@ -35,7 +35,7 @@ from claude_unity_bridge.cli import (
     update_package,
     get_skill_source_dir,
     get_skill_target_dir,
-    get_claude_skills_dir,
+    get_dsh_skills_dir,
     load_build_config,
     _validate_command_id,
     main,
@@ -76,11 +76,11 @@ class TestFormatTestResults:
                 "skipped": 1,
                 "failures": [
                     {
-                        "name": "MXR.Tests.AuthTests.LoginTest",
+                        "name": "DeepSeekAI.Tests.AuthTests.LoginTest",
                         "message": "Expected: success\nActual: failure",
                     },
                     {
-                        "name": "MXR.Tests.NetworkTests.TimeoutTest",
+                        "name": "DeepSeekAI.Tests.NetworkTests.TimeoutTest",
                         "message": "NullReferenceException",
                     },
                 ],
@@ -92,9 +92,9 @@ class TestFormatTestResults:
         assert "✗ Tests Failed: 2" in result
         assert "○ Tests Skipped: 1" in result
         assert "Failed Tests:" in result
-        assert "MXR.Tests.AuthTests.LoginTest" in result
+        assert "DeepSeekAI.Tests.AuthTests.LoginTest" in result
         assert "Expected: success" in result
-        assert "MXR.Tests.NetworkTests.TimeoutTest" in result
+        assert "DeepSeekAI.Tests.NetworkTests.TimeoutTest" in result
 
 
 class TestFormatCompileResults:
@@ -380,13 +380,13 @@ class TestFormatBuildResults:
                 "totalSeconds": 120.5,
                 "outputPath": "",
                 "sizeBytes": 0,
-                "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
             },
         }
         result = format_build_results(response, "success", 121.0)
 
         assert "Build Succeeded" in result
-        assert "Method: MXR.Builder.BuildEntryPoints.BuildQuest" in result
+        assert "Method: DeepSeekAI.Builder.BuildEntryPoints.BuildQuest" in result
         assert "Build Time: 120.5s" in result
 
     def test_build_failure(self):
@@ -438,49 +438,49 @@ class TestFormatBuildResults:
 
 
 class TestLoadBuildConfig:
-    """Test loading optional build profiles from .unity-bridge/build.json"""
+    """Test loading optional build profiles from .harness-unity-bridge/build.json"""
 
     def test_load_valid_config(self, tmp_path):
         config = {
             "profiles": {
                 "quest": {
-                    "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                    "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                     "env": {"BUILD_TYPE": "development"},
                     "timeout": 600,
                 },
                 "pico": {
-                    "method": "MXR.Builder.BuildEntryPoints.BuildPico",
+                    "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildPico",
                 },
             },
             "default": "quest",
         }
-        config_file = tmp_path / ".unity-bridge" / "build.json"
+        config_file = tmp_path / ".harness-unity-bridge" / "build.json"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(json.dumps(config))
 
-        result = load_build_config(tmp_path / ".unity-bridge")
+        result = load_build_config(tmp_path / ".harness-unity-bridge")
         assert result is not None
         assert "quest" in result["profiles"]
-        assert result["profiles"]["quest"]["method"] == "MXR.Builder.BuildEntryPoints.BuildQuest"
+        assert result["profiles"]["quest"]["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
         assert result["default"] == "quest"
 
     def test_load_missing_config_returns_none(self, tmp_path):
-        result = load_build_config(tmp_path / ".unity-bridge")
+        result = load_build_config(tmp_path / ".harness-unity-bridge")
         assert result is None
 
     def test_load_invalid_json_returns_none(self, tmp_path):
-        config_file = tmp_path / ".unity-bridge" / "build.json"
+        config_file = tmp_path / ".harness-unity-bridge" / "build.json"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text("not valid json{{{")
 
-        result = load_build_config(tmp_path / ".unity-bridge")
+        result = load_build_config(tmp_path / ".harness-unity-bridge")
         assert result is None
 
     def test_resolve_profile(self, tmp_path):
         config = {
             "profiles": {
                 "quest": {
-                    "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                    "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                     "env": {
                         "BUILD_TYPE": "development",
                         "SCRIPTING_BACKEND": "il2cpp",
@@ -489,14 +489,14 @@ class TestLoadBuildConfig:
                 },
             },
         }
-        config_file = tmp_path / ".unity-bridge" / "build.json"
+        config_file = tmp_path / ".harness-unity-bridge" / "build.json"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(json.dumps(config))
 
-        build_config = load_build_config(tmp_path / ".unity-bridge")
+        build_config = load_build_config(tmp_path / ".harness-unity-bridge")
         profile = build_config["profiles"]["quest"]
 
-        assert profile["method"] == "MXR.Builder.BuildEntryPoints.BuildQuest"
+        assert profile["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
         assert profile["env"]["BUILD_TYPE"] == "development"
         assert profile["env"]["SCRIPTING_BACKEND"] == "il2cpp"
         assert profile["timeout"] == 600
@@ -531,7 +531,7 @@ class TestWriteCommand:
 
     def test_write_command_creates_file(self, tmp_path):
         # Patch UNITY_DIR to use temp directory
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = write_command("test-action", {"param": "value"})
 
             # Check UUID format
@@ -550,7 +550,7 @@ class TestWriteCommand:
 
     def test_write_command_creates_directory(self, tmp_path):
         unity_dir = tmp_path / "nested" / "unity"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             write_command("test", {})
             assert unity_dir.exists()
 
@@ -559,7 +559,7 @@ class TestWaitForResponse:
     """Test response waiting and polling"""
 
     def test_wait_for_response_success(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
             response_data = {"id": command_id, "status": "success", "action": "test"}
 
@@ -572,7 +572,7 @@ class TestWaitForResponse:
             assert result == response_data
 
     def test_wait_for_response_timeout(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Create directory to simulate Unity running
             tmp_path.mkdir(exist_ok=True)
 
@@ -584,7 +584,7 @@ class TestWaitForResponse:
     def test_wait_for_response_unity_not_running(self, tmp_path):
         # Don't create directory to simulate Unity not running
         nonexistent_dir = tmp_path / "does-not-exist"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
             with pytest.raises(UnityNotRunningError) as exc_info:
                 wait_for_response("c3d4e5f6-a7b8-9012-cdef-123456789012", timeout=1)
 
@@ -595,7 +595,7 @@ class TestCleanupOldResponses:
     """Test cleanup functionality"""
 
     def test_cleanup_old_responses(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Create some response files
             old_file = tmp_path / "response-old-123.json"
             recent_file = tmp_path / "response-recent-456.json"
@@ -620,7 +620,7 @@ class TestCleanupOldResponses:
     def test_cleanup_no_directory(self, tmp_path):
         # Should not raise error if directory doesn't exist
         nonexistent_dir = tmp_path / "does-not-exist"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
             cleanup_old_responses()  # Should not raise
 
 
@@ -629,7 +629,7 @@ class TestIntegration:
 
     def test_full_command_cycle(self, tmp_path):
         """Test writing command, waiting for response, and formatting"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Write command
             command_id = write_command("get-status", {})
 
@@ -844,7 +844,7 @@ class TestCleanupResponseFile:
     """Test cleanup_response_file function"""
 
     def test_cleanup_existing_file(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "d4e5f6a7-b8c9-0123-defa-234567890123"
             response_file = tmp_path / f"response-{command_id}.json"
             response_file.write_text('{"id": "test"}')
@@ -853,12 +853,12 @@ class TestCleanupResponseFile:
             assert not response_file.exists()
 
     def test_cleanup_nonexistent_file(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Should not raise error
             cleanup_response_file("e5f6a7b8-c9d0-1234-efab-345678901234")
 
     def test_cleanup_with_verbose(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "f6a7b8c9-d0e1-2345-fabc-456789012345"
             response_file = tmp_path / f"response-{command_id}.json"
             response_file.write_text('{"id": "test"}')
@@ -873,7 +873,7 @@ class TestCleanupOldResponsesVerbose:
     """Test cleanup_old_responses verbose mode"""
 
     def test_cleanup_verbose_output(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             old_file = tmp_path / "response-old-verbose.json"
             old_file.write_text('{"id": "old"}')
 
@@ -897,14 +897,14 @@ class TestWriteCommandErrors:
         blocking_file.write_text("blocking")
         unity_dir = blocking_file / "unity"
 
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             with pytest.raises(UnityCommandError) as exc_info:
                 write_command("test", {})
             assert "Failed to create Unity directory" in str(exc_info.value)
 
     def test_write_command_file_write_failure(self, tmp_path):
         # Make the directory read-only to cause write failure
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             tmp_path.mkdir(parents=True, exist_ok=True)
             # Mock Path.write_text to raise an exception
             with patch.object(Path, "write_text", side_effect=PermissionError("Permission denied")):
@@ -917,7 +917,7 @@ class TestWaitForResponseEdgeCases:
     """Test edge cases in wait_for_response"""
 
     def test_wait_verbose_polling(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "a7b8c9d0-e1f2-3456-abcd-567890123456"
             response_data = {"id": command_id, "status": "success"}
 
@@ -939,7 +939,7 @@ class TestWaitForResponseEdgeCases:
 
     def test_wait_json_decode_error_recovery(self, tmp_path, capsys):
         """Test that mid-write JSON errors are retried once"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "b8c9d0e1-f2a3-4567-bcde-678901234567"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -961,7 +961,7 @@ class TestWaitForResponseEdgeCases:
 
     def test_wait_json_decode_error_persistent(self, tmp_path, capsys):
         """Test that persistent JSON errors raise an exception"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "c9d0e1f2-a3b4-5678-cdef-789012345678"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -981,7 +981,7 @@ class TestWaitForRunningStatus:
 
     def test_polls_until_complete(self, tmp_path):
         """wait_for_response should keep polling when status is 'running'"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -1019,7 +1019,7 @@ class TestWaitForRunningStatus:
 
     def test_timeout_while_running(self, tmp_path):
         """wait_for_response should timeout even if status stays 'running'"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -1037,7 +1037,7 @@ class TestWaitForRunningStatus:
 
     def test_verbose_progress_output(self, tmp_path, capsys):
         """wait_for_response should print progress when verbose and status is 'running'"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "c3d4e5f6-a7b8-9012-cdef-123456789012"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -1076,7 +1076,7 @@ class TestWaitForRunningStatus:
 
     def test_verbose_no_progress_info(self, tmp_path, capsys):
         """Verbose output should say 'Command running...' when no progress info"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "d4e5f6a7-b8c9-0123-defa-234567890123"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -1113,7 +1113,7 @@ class TestWaitForRunningStatus:
 
     def test_returns_failure_not_running(self, tmp_path):
         """wait_for_response should return immediately for non-running statuses"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "e5f6a7b8-c9d0-1234-efab-345678901234"
             response_file = tmp_path / f"response-{command_id}.json"
 
@@ -1136,7 +1136,7 @@ class TestExecuteCommand:
     """Test execute_command function"""
 
     def test_execute_command_success(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Write command file manually
             import uuid
 
@@ -1170,13 +1170,13 @@ class TestExecuteCommand:
                 )
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 result = execute_command("get-status", {}, timeout=5)
                 assert "Unity Editor Status" in result
 
     def test_execute_command_always_cleans_up(self, tmp_path):
         """execute_command always runs cleanup, even without cleanup flag"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Create an old response file
             tmp_path.mkdir(parents=True, exist_ok=True)
             old_file = tmp_path / "response-old-exec.json"
@@ -1204,7 +1204,7 @@ class TestExecuteCommand:
                 )
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 # Note: cleanup flag NOT passed — cleanup should still run
                 result = execute_command("compile", {}, timeout=5)
                 assert "Compilation Successful" in result
@@ -1212,7 +1212,7 @@ class TestExecuteCommand:
                 assert not old_file.exists()
 
     def test_execute_command_verbose(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import uuid
 
             command_id = str(uuid.uuid4())
@@ -1232,7 +1232,7 @@ class TestExecuteCommand:
                 )
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 result = execute_command("refresh", {}, timeout=5, verbose=True)
                 assert "Asset Database Refreshed" in result
 
@@ -1248,7 +1248,7 @@ class TestHealthCheck:
     def test_health_check_no_directory(self, tmp_path, capsys):
         """Health check fails when Unity directory doesn't exist"""
         nonexistent_dir = tmp_path / "does-not-exist"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
             result = execute_health_check(timeout=5, verbose=False)
             assert result == EXIT_ERROR
 
@@ -1258,14 +1258,14 @@ class TestHealthCheck:
 
     def test_health_check_success(self, tmp_path, capsys):
         """Health check succeeds when Unity responds"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             tmp_path.mkdir(parents=True, exist_ok=True)
 
             # Mock execute_command to return success
             def mock_execute(action, params, timeout, verbose):
                 return "Unity Editor Status:\n  - Compilation: ✓ Ready"
 
-            with patch("claude_unity_bridge.cli.execute_command", side_effect=mock_execute):
+            with patch("harness_unity_bridge.cli.execute_command", side_effect=mock_execute):
                 result = execute_health_check(timeout=5, verbose=False)
                 assert result == EXIT_SUCCESS
 
@@ -1275,12 +1275,12 @@ class TestHealthCheck:
 
     def test_health_check_unity_not_responding(self, tmp_path, capsys):
         """Health check fails when Unity doesn't respond"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             tmp_path.mkdir(parents=True, exist_ok=True)
 
             # Mock execute_command to raise UnityNotRunningError
             with patch(
-                "claude_unity_bridge.cli.execute_command",
+                "harness_unity_bridge.cli.execute_command",
                 side_effect=UnityNotRunningError("Unity not running"),
             ):
                 result = execute_health_check(timeout=5, verbose=False)
@@ -1291,12 +1291,12 @@ class TestHealthCheck:
 
     def test_health_check_timeout(self, tmp_path, capsys):
         """Health check returns timeout when Unity times out"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             tmp_path.mkdir(parents=True, exist_ok=True)
 
             # Mock execute_command to raise CommandTimeoutError
             with patch(
-                "claude_unity_bridge.cli.execute_command",
+                "harness_unity_bridge.cli.execute_command",
                 side_effect=CommandTimeoutError("Timeout"),
             ):
                 result = execute_health_check(timeout=5, verbose=False)
@@ -1310,14 +1310,14 @@ class TestMainFunction:
     """Test main() CLI function"""
 
     def test_main_help(self, capsys):
-        with patch("sys.argv", ["unity-bridge", "--help"]):
+        with patch("sys.argv", ["harness-unity-bridge", "--help"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code == 0
 
     def test_main_run_tests(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            argv = ["unity-bridge", "run-tests", "--mode", "EditMode", "--timeout", "1"]
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            argv = ["harness-unity-bridge", "run-tests", "--mode", "EditMode", "--timeout", "1"]
             with patch("sys.argv", argv):
                 # Create response immediately
                 def mock_write(action, params):
@@ -1341,14 +1341,14 @@ class TestMainFunction:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_get_console_logs(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "10",
@@ -1376,28 +1376,28 @@ class TestMainFunction:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_health_check(self, tmp_path, capsys):
         """Test health-check via main()"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             tmp_path.mkdir(parents=True, exist_ok=True)
 
-            argv = ["unity-bridge", "health-check", "--timeout", "5"]
+            argv = ["harness-unity-bridge", "health-check", "--timeout", "5"]
             with patch("sys.argv", argv):
 
                 def mock_execute(action, params, timeout, verbose):
                     return "Unity Editor Status:\n  - Compilation: ✓ Ready"
 
-                with patch("claude_unity_bridge.cli.execute_command", side_effect=mock_execute):
+                with patch("harness_unity_bridge.cli.execute_command", side_effect=mock_execute):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_play(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            argv = ["unity-bridge", "play", "--timeout", "1"]
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            argv = ["harness-unity-bridge", "play", "--timeout", "1"]
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
@@ -1421,13 +1421,13 @@ class TestMainFunction:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_pause(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            argv = ["unity-bridge", "pause", "--timeout", "1"]
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            argv = ["harness-unity-bridge", "pause", "--timeout", "1"]
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
@@ -1451,13 +1451,13 @@ class TestMainFunction:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_step(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            argv = ["unity-bridge", "step", "--timeout", "1"]
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            argv = ["harness-unity-bridge", "step", "--timeout", "1"]
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
@@ -1481,26 +1481,26 @@ class TestMainFunction:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_timeout_error(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "1"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1"]):
                 # Don't create response - will timeout
                 exit_code = main()
                 assert exit_code == EXIT_TIMEOUT
 
     def test_main_unity_not_running(self, tmp_path):
         nonexistent_dir = tmp_path / "nonexistent"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
-            with patch("sys.argv", ["unity-bridge", "get-status", "--timeout", "1"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", nonexistent_dir):
+            with patch("sys.argv", ["harness-unity-bridge", "get-status", "--timeout", "1"]):
                 # Mock write_command to return an ID without creating the directory
                 # This simulates the case where the command file can't be written
                 # because Unity never created the directory structure
                 with patch(
-                    "claude_unity_bridge.cli.write_command",
+                    "harness_unity_bridge.cli.write_command",
                     return_value="f2a3b4c5-d6e7-8901-fabc-012345678901",
                 ):
                     exit_code = main()
@@ -1512,36 +1512,36 @@ class TestMainFunction:
         blocking_file.write_text("blocking")
         unity_dir = blocking_file / "unity"
 
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "1"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1"]):
                 exit_code = main()
                 assert exit_code == EXIT_ERROR
 
     def test_main_keyboard_interrupt(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "1"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1"]):
                 with patch(
-                    "claude_unity_bridge.cli.execute_command",
+                    "harness_unity_bridge.cli.execute_command",
                     side_effect=KeyboardInterrupt,
                 ):
                     exit_code = main()
                     assert exit_code == EXIT_ERROR
 
     def test_main_unexpected_error(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "1"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1"]):
                 with patch(
-                    "claude_unity_bridge.cli.execute_command",
+                    "harness_unity_bridge.cli.execute_command",
                     side_effect=RuntimeError("Unexpected"),
                 ):
                     exit_code = main()
                     assert exit_code == EXIT_ERROR
 
     def test_main_verbose_unexpected_error(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "1", "--verbose"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1", "--verbose"]):
                 with patch(
-                    "claude_unity_bridge.cli.execute_command",
+                    "harness_unity_bridge.cli.execute_command",
                     side_effect=RuntimeError("Unexpected"),
                 ):
                     exit_code = main()
@@ -1555,8 +1555,8 @@ class TestArgumentValidation:
 
     def test_timeout_zero_rejected(self, tmp_path, capsys):
         """--timeout 0 should fail validation"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "get-status", "--timeout", "0"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "get-status", "--timeout", "0"]):
                 with pytest.raises(SystemExit) as exc_info:
                     main()
                 assert exc_info.value.code == 2  # argparse error exit code
@@ -1566,8 +1566,8 @@ class TestArgumentValidation:
 
     def test_timeout_negative_rejected(self, tmp_path, capsys):
         """--timeout -5 should fail validation"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["unity-bridge", "compile", "--timeout", "-5"]):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "-5"]):
                 with pytest.raises(SystemExit) as exc_info:
                     main()
                 assert exc_info.value.code == 2
@@ -1577,9 +1577,9 @@ class TestArgumentValidation:
 
     def test_limit_zero_rejected(self, tmp_path, capsys):
         """--limit 0 should fail validation"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "0",
@@ -1597,9 +1597,9 @@ class TestArgumentValidation:
 
     def test_limit_negative_rejected(self, tmp_path, capsys):
         """--limit -1 should fail validation"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "-1",
@@ -1616,9 +1616,9 @@ class TestArgumentValidation:
 
     def test_limit_too_large_rejected(self, tmp_path, capsys):
         """--limit 1001 should fail validation (exceeds MAX_LIMIT)"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "1001",
@@ -1636,10 +1636,10 @@ class TestArgumentValidation:
 
     def test_limit_valid_boundary(self, tmp_path):
         """--limit 1 and --limit 1000 should be accepted"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Test lower boundary
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "1",
@@ -1664,13 +1664,13 @@ class TestArgumentValidation:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
             # Test upper boundary
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "get-console-logs",
                 "--limit",
                 "1000",
@@ -1695,7 +1695,7 @@ class TestArgumentValidation:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write_1000):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write_1000):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
@@ -1704,13 +1704,13 @@ class TestSecurityValidation:
     """Test security-related validations"""
 
     def test_symlink_detection(self, tmp_path):
-        """Symlinked .unity-bridge directory should raise security error"""
+        """Symlinked .harness-unity-bridge directory should raise security error"""
         # Create a target directory for the symlink
         target_dir = tmp_path / "real_dir"
         target_dir.mkdir()
 
-        # Try to create a symlink for the .unity-bridge directory
-        symlink_path = tmp_path / ".unity-bridge"
+        # Try to create a symlink for the .harness-unity-bridge directory
+        symlink_path = tmp_path / ".harness-unity-bridge"
         try:
             symlink_path.symlink_to(target_dir)
         except OSError:
@@ -1718,7 +1718,7 @@ class TestSecurityValidation:
             # Skip this test as it requires symlink support
             pytest.skip("Symlink creation not supported (requires Developer Mode on Windows)")
 
-        with patch("claude_unity_bridge.cli.UNITY_DIR", symlink_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", symlink_path):
             with pytest.raises(UnityCommandError) as exc_info:
                 write_command("test", {})
 
@@ -1727,9 +1727,9 @@ class TestSecurityValidation:
 
     def test_normal_directory_allowed(self, tmp_path):
         """Normal (non-symlink) directory should work fine"""
-        unity_dir = tmp_path / ".unity-bridge"
+        unity_dir = tmp_path / ".harness-unity-bridge"
         # Don't create it - write_command should create it
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             # Also patch cwd for gitignore check
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 command_id = write_command("test-action", {"param": "value"})
@@ -1744,26 +1744,26 @@ class TestGitignoreNotification:
     """Test gitignore notification feature"""
 
     def test_no_notification_when_gitignore_contains_unity_bridge(self, tmp_path, capsys):
-        """No notification when .unity-bridge is already in .gitignore"""
+        """No notification when .harness-unity-bridge is already in .gitignore"""
         gitignore = tmp_path / ".gitignore"
-        gitignore.write_text(".unity-bridge/\n")
+        gitignore.write_text(".harness-unity-bridge/\n")
 
         with patch("pathlib.Path.cwd", return_value=tmp_path):
             check_gitignore_and_notify()
 
         captured = capsys.readouterr()
-        assert ".unity-bridge" not in captured.err
+        assert ".harness-unity-bridge" not in captured.err
 
     def test_no_notification_when_gitignore_contains_pattern(self, tmp_path, capsys):
-        """No notification when gitignore contains .unity-bridge pattern (without slash)"""
+        """No notification when gitignore contains .harness-unity-bridge pattern (without slash)"""
         gitignore = tmp_path / ".gitignore"
-        gitignore.write_text("*.log\n.unity-bridge\ntemp/\n")
+        gitignore.write_text("*.log\n.harness-unity-bridge\ntemp/\n")
 
         with patch("pathlib.Path.cwd", return_value=tmp_path):
             check_gitignore_and_notify()
 
         captured = capsys.readouterr()
-        assert ".unity-bridge" not in captured.err
+        assert ".harness-unity-bridge" not in captured.err
 
     def test_notification_when_gitignore_missing(self, tmp_path, capsys):
         """Notification when .gitignore doesn't exist"""
@@ -1776,11 +1776,11 @@ class TestGitignoreNotification:
             check_gitignore_and_notify()
 
         captured = capsys.readouterr()
-        assert ".unity-bridge/" in captured.err
+        assert ".harness-unity-bridge/" in captured.err
         assert "gitignore" in captured.err.lower()
 
     def test_notification_when_gitignore_exists_without_unity_bridge(self, tmp_path, capsys):
-        """Notification when .gitignore exists but doesn't contain .unity-bridge"""
+        """Notification when .gitignore exists but doesn't contain .harness-unity-bridge"""
         gitignore = tmp_path / ".gitignore"
         gitignore.write_text("*.log\nnode_modules/\n")
 
@@ -1788,35 +1788,35 @@ class TestGitignoreNotification:
             check_gitignore_and_notify()
 
         captured = capsys.readouterr()
-        assert ".unity-bridge/" in captured.err
+        assert ".harness-unity-bridge/" in captured.err
         assert "gitignore" in captured.err.lower()
 
     def test_notification_on_first_directory_creation(self, tmp_path, capsys):
         """Notification is shown when directory is first created"""
-        unity_dir = tmp_path / ".unity-bridge"
+        unity_dir = tmp_path / ".harness-unity-bridge"
         # Ensure no gitignore to trigger notification
         gitignore = tmp_path / ".gitignore"
         if gitignore.exists():
             gitignore.unlink()
 
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 write_command("test", {})
 
         captured = capsys.readouterr()
-        assert ".unity-bridge/" in captured.err
+        assert ".harness-unity-bridge/" in captured.err
 
     def test_no_notification_on_subsequent_command(self, tmp_path, capsys):
         """No notification when directory already exists"""
-        unity_dir = tmp_path / ".unity-bridge"
+        unity_dir = tmp_path / ".harness-unity-bridge"
         unity_dir.mkdir()  # Pre-create directory
 
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 write_command("test", {})
 
         captured = capsys.readouterr()
-        assert ".unity-bridge/" not in captured.err
+        assert ".harness-unity-bridge/" not in captured.err
 
 
 class TestSkillManagement:
@@ -1829,15 +1829,15 @@ class TestSkillManagement:
         assert source_dir.exists()
         assert (source_dir / "SKILL.md").exists()
 
-    def test_get_claude_skills_dir(self):
-        """get_claude_skills_dir should return ~/.claude/skills"""
-        skills_dir = get_claude_skills_dir()
-        assert skills_dir == Path.home() / ".claude" / "skills"
+    def test_get_dsh_skills_dir(self):
+        """get_dsh_skills_dir should return ~/.dsh/skills"""
+        skills_dir = get_dsh_skills_dir()
+        assert skills_dir == Path.home() / ".dsh" / "skills"
 
     def test_get_skill_target_dir(self):
-        """get_skill_target_dir should return ~/.claude/skills/unity-bridge"""
+        """get_skill_target_dir should return ~/.dsh/skills/unity-bridge"""
         target_dir = get_skill_target_dir()
-        assert target_dir == Path.home() / ".claude" / "skills" / "unity-bridge"
+        assert target_dir == Path.home() / ".dsh" / "skills" / "unity-bridge"
 
     def test_install_skill_creates_symlink(self, tmp_path, capsys):
         """install_skill should create a symlink or copy to the skill directory"""
@@ -1845,15 +1845,15 @@ class TestSkillManagement:
 
         with patch.object(Path, "home", return_value=tmp_path / "home"):
             # Create mock home directory structure
-            (tmp_path / "home" / ".claude").mkdir(parents=True)
+            (tmp_path / "home" / ".dsh").mkdir(parents=True)
 
-            # Patch get_claude_skills_dir to use our temp dir
+            # Patch get_dsh_skills_dir to use our temp dir
             with patch(
-                "claude_unity_bridge.cli.get_claude_skills_dir",
+                "harness_unity_bridge.cli.get_dsh_skills_dir",
                 return_value=skills_dir,
             ):
                 with patch(
-                    "claude_unity_bridge.cli.get_skill_target_dir",
+                    "harness_unity_bridge.cli.get_skill_target_dir",
                     return_value=skills_dir / "unity-bridge",
                 ):
                     result = install_skill(verbose=False)
@@ -1890,11 +1890,11 @@ class TestSkillManagement:
             created_symlink = False
 
         with patch(
-            "claude_unity_bridge.cli.get_claude_skills_dir",
+            "harness_unity_bridge.cli.get_dsh_skills_dir",
             return_value=skills_dir,
         ):
             with patch(
-                "claude_unity_bridge.cli.get_skill_target_dir",
+                "harness_unity_bridge.cli.get_skill_target_dir",
                 return_value=target_path,
             ):
                 result = install_skill(verbose=True)
@@ -1922,11 +1922,11 @@ class TestSkillManagement:
         (skill_dir / "some_file.txt").write_text("test")
 
         with patch(
-            "claude_unity_bridge.cli.get_claude_skills_dir",
+            "harness_unity_bridge.cli.get_dsh_skills_dir",
             return_value=skills_dir,
         ):
             with patch(
-                "claude_unity_bridge.cli.get_skill_target_dir",
+                "harness_unity_bridge.cli.get_skill_target_dir",
                 return_value=skill_dir,
             ):
                 result = install_skill(verbose=True)
@@ -1943,7 +1943,7 @@ class TestSkillManagement:
     def test_install_skill_fails_when_source_missing(self, tmp_path, capsys):
         """install_skill should fail when skill source directory is missing"""
         with patch(
-            "claude_unity_bridge.cli.get_skill_source_dir",
+            "harness_unity_bridge.cli.get_skill_source_dir",
             return_value=None,
         ):
             result = install_skill(verbose=False)
@@ -1975,7 +1975,7 @@ class TestSkillManagement:
             is_symlink = False
 
         with patch(
-            "claude_unity_bridge.cli.get_skill_target_dir",
+            "harness_unity_bridge.cli.get_skill_target_dir",
             return_value=install_path,
         ):
             result = uninstall_skill(verbose=False)
@@ -1997,7 +1997,7 @@ class TestSkillManagement:
         symlink = skills_dir / "unity-bridge"
 
         with patch(
-            "claude_unity_bridge.cli.get_skill_target_dir",
+            "harness_unity_bridge.cli.get_skill_target_dir",
             return_value=symlink,
         ):
             result = uninstall_skill(verbose=False)
@@ -2016,7 +2016,7 @@ class TestSkillManagement:
         (skill_dir / "SKILL.md").write_text("# Skill")
 
         with patch(
-            "claude_unity_bridge.cli.get_skill_target_dir",
+            "harness_unity_bridge.cli.get_skill_target_dir",
             return_value=skill_dir,
         ):
             result = uninstall_skill(verbose=False)
@@ -2031,13 +2031,13 @@ class TestSkillManagement:
         """Test install-skill command via main()"""
         skills_dir = tmp_path / "skills"
 
-        with patch("sys.argv", ["unity-bridge", "install-skill"]):
+        with patch("sys.argv", ["harness-unity-bridge", "install-skill"]):
             with patch(
-                "claude_unity_bridge.cli.get_claude_skills_dir",
+                "harness_unity_bridge.cli.get_dsh_skills_dir",
                 return_value=skills_dir,
             ):
                 with patch(
-                    "claude_unity_bridge.cli.get_skill_target_dir",
+                    "harness_unity_bridge.cli.get_skill_target_dir",
                     return_value=skills_dir / "unity-bridge",
                 ):
                     exit_code = main()
@@ -2063,9 +2063,9 @@ class TestSkillManagement:
 
             shutil.copytree(target, install_path)
 
-        with patch("sys.argv", ["unity-bridge", "uninstall-skill"]):
+        with patch("sys.argv", ["harness-unity-bridge", "uninstall-skill"]):
             with patch(
-                "claude_unity_bridge.cli.get_skill_target_dir",
+                "harness_unity_bridge.cli.get_skill_target_dir",
                 return_value=install_path,
             ):
                 exit_code = main()
@@ -2080,11 +2080,11 @@ class TestSkillManagement:
         target_file.write_text("not a symlink or directory")
 
         with patch(
-            "claude_unity_bridge.cli.get_claude_skills_dir",
+            "harness_unity_bridge.cli.get_dsh_skills_dir",
             return_value=skills_dir,
         ):
             with patch(
-                "claude_unity_bridge.cli.get_skill_target_dir",
+                "harness_unity_bridge.cli.get_skill_target_dir",
                 return_value=target_file,
             ):
                 result = install_skill(verbose=True)
@@ -2106,11 +2106,11 @@ class TestSkillManagement:
 
         with patch("subprocess.run", return_value=mock_result):
             with patch(
-                "claude_unity_bridge.cli.get_claude_skills_dir",
+                "harness_unity_bridge.cli.get_dsh_skills_dir",
                 return_value=skills_dir,
             ):
                 with patch(
-                    "claude_unity_bridge.cli.get_skill_target_dir",
+                    "harness_unity_bridge.cli.get_skill_target_dir",
                     return_value=skills_dir / "unity-bridge",
                 ):
                     result = update_package(verbose=False)
@@ -2147,14 +2147,14 @@ class TestSkillManagement:
         skills_dir = tmp_path / "skills"
         mock_result = type("Result", (), {"returncode": 0, "stderr": ""})()
 
-        with patch("sys.argv", ["unity-bridge", "update"]):
+        with patch("sys.argv", ["harness-unity-bridge", "update"]):
             with patch("subprocess.run", return_value=mock_result):
                 with patch(
-                    "claude_unity_bridge.cli.get_claude_skills_dir",
+                    "harness_unity_bridge.cli.get_dsh_skills_dir",
                     return_value=skills_dir,
                 ):
                     with patch(
-                        "claude_unity_bridge.cli.get_skill_target_dir",
+                        "harness_unity_bridge.cli.get_skill_target_dir",
                         return_value=skills_dir / "unity-bridge",
                     ):
                         exit_code = main()
@@ -2172,11 +2172,11 @@ class TestSkillManagement:
 
         with patch.object(Path, "symlink_to", mock_symlink_to):
             with patch(
-                "claude_unity_bridge.cli.get_claude_skills_dir",
+                "harness_unity_bridge.cli.get_dsh_skills_dir",
                 return_value=skills_dir,
             ):
                 with patch(
-                    "claude_unity_bridge.cli.get_skill_target_dir",
+                    "harness_unity_bridge.cli.get_skill_target_dir",
                     return_value=target_dir,
                 ):
                     result = install_skill(verbose=True)
@@ -2205,11 +2205,11 @@ class TestSkillManagement:
         with patch.object(Path, "symlink_to", mock_symlink_to):
             with patch("shutil.copytree", side_effect=PermissionError("Permission denied")):
                 with patch(
-                    "claude_unity_bridge.cli.get_claude_skills_dir",
+                    "harness_unity_bridge.cli.get_dsh_skills_dir",
                     return_value=skills_dir,
                 ):
                     with patch(
-                        "claude_unity_bridge.cli.get_skill_target_dir",
+                        "harness_unity_bridge.cli.get_skill_target_dir",
                         return_value=target_dir,
                     ):
                         result = install_skill(verbose=False)
@@ -2230,11 +2230,11 @@ class TestSkillManagement:
         (target_dir / "old_file.txt").write_text("old")
 
         with patch(
-            "claude_unity_bridge.cli.get_claude_skills_dir",
+            "harness_unity_bridge.cli.get_dsh_skills_dir",
             return_value=skills_dir,
         ):
             with patch(
-                "claude_unity_bridge.cli.get_skill_target_dir",
+                "harness_unity_bridge.cli.get_skill_target_dir",
                 return_value=target_dir,
             ):
                 result = install_skill(verbose=True)
@@ -2261,7 +2261,7 @@ class TestSkillManagement:
         (target_dir / "scripts").mkdir()
 
         with patch(
-            "claude_unity_bridge.cli.get_skill_target_dir",
+            "harness_unity_bridge.cli.get_skill_target_dir",
             return_value=target_dir,
         ):
             result = uninstall_skill(verbose=False)
@@ -2283,7 +2283,7 @@ class TestSkillManagement:
         (target_dir / "random_file.txt").write_text("not a skill")
 
         with patch(
-            "claude_unity_bridge.cli.get_skill_target_dir",
+            "harness_unity_bridge.cli.get_skill_target_dir",
             return_value=target_dir,
         ):
             result = uninstall_skill(verbose=False)
@@ -2323,19 +2323,19 @@ class TestUUIDValidation:
 
     def test_wait_for_response_validates_id(self, tmp_path):
         """wait_for_response should reject invalid command IDs"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             with pytest.raises(UnityCommandError, match="Invalid command ID format"):
                 wait_for_response("../../etc/passwd", timeout=1)
 
     def test_cleanup_response_file_validates_id(self, tmp_path):
         """cleanup_response_file should reject invalid command IDs"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             with pytest.raises(UnityCommandError, match="Invalid command ID format"):
                 cleanup_response_file("../../etc/passwd")
 
     def test_response_id_mismatch_rejected(self, tmp_path):
         """Response with mismatched ID should raise UnityCommandError"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
             response_file = tmp_path / f"response-{command_id}.json"
             response_file.write_text(json.dumps({"id": "different-id", "status": "success"}))
@@ -2346,14 +2346,14 @@ class TestUUIDValidation:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions not supported on Windows")
 class TestDirectoryPermissions:
-    """Test that .unity-bridge/ directory and files get restrictive permissions"""
+    """Test that .harness-unity-bridge/ directory and files get restrictive permissions"""
 
     def test_directory_created_with_0700_permissions(self, tmp_path):
         import os
         import stat
 
-        unity_dir = tmp_path / ".unity-bridge"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        unity_dir = tmp_path / ".harness-unity-bridge"
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             write_command("test-action", {"param": "value"})
         mode = os.stat(unity_dir).st_mode
         dir_perms = stat.S_IMODE(mode)
@@ -2363,8 +2363,8 @@ class TestDirectoryPermissions:
         import os
         import stat
 
-        unity_dir = tmp_path / ".unity-bridge"
-        with patch("claude_unity_bridge.cli.UNITY_DIR", unity_dir):
+        unity_dir = tmp_path / ".harness-unity-bridge"
+        with patch("harness_unity_bridge.cli.UNITY_DIR", unity_dir):
             write_command("test-action", {"param": "value"})
         command_file = unity_dir / "command.json"
         mode = os.stat(command_file).st_mode
@@ -2377,7 +2377,7 @@ class TestCleanupStaleCommandFile:
 
     def test_removes_stale_command_file(self, tmp_path):
         """Stale command.json older than timeout is removed"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import os
 
             command_file = tmp_path / "command.json"
@@ -2392,7 +2392,7 @@ class TestCleanupStaleCommandFile:
 
     def test_keeps_fresh_command_file(self, tmp_path):
         """Recent command.json within timeout is kept"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             command_file = tmp_path / "command.json"
             command_file.write_text('{"id": "fresh", "action": "compile"}')
 
@@ -2401,12 +2401,12 @@ class TestCleanupStaleCommandFile:
 
     def test_no_command_file(self, tmp_path):
         """No error when command.json doesn't exist"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             cleanup_stale_command_file(timeout=30)  # Should not raise
 
     def test_verbose_output(self, tmp_path, capsys):
         """Verbose mode logs stale command file cleanup"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import os
 
             command_file = tmp_path / "command.json"
@@ -2425,7 +2425,7 @@ class TestCleanupOldResponsesWithTmpFiles:
 
     def test_cleanup_old_tmp_files(self, tmp_path):
         """Old .tmp files are cleaned up alongside response files"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import os
 
             # Create old tmp file
@@ -2445,7 +2445,7 @@ class TestCleanupOldResponsesWithTmpFiles:
 
     def test_cleanup_both_response_and_tmp(self, tmp_path):
         """Both old response files and old tmp files are cleaned"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import os
 
             old_time = time.time() - 7200
@@ -2469,7 +2469,7 @@ class TestResponseCleanupOnError:
 
     def test_response_file_cleaned_on_timeout(self, tmp_path):
         """Response file is cleaned up when CommandTimeoutError is raised"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import uuid
 
             command_id = str(uuid.uuid4())
@@ -2480,9 +2480,9 @@ class TestResponseCleanupOnError:
                 response_file.write_text('{"partial": true}')
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 with patch(
-                    "claude_unity_bridge.cli.wait_for_response",
+                    "harness_unity_bridge.cli.wait_for_response",
                     side_effect=CommandTimeoutError("Timed out"),
                 ):
                     with pytest.raises(CommandTimeoutError):
@@ -2494,7 +2494,7 @@ class TestResponseCleanupOnError:
 
     def test_response_file_cleaned_on_format_error(self, tmp_path):
         """Response file is cleaned up when format_response raises"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import uuid
 
             command_id = str(uuid.uuid4())
@@ -2510,9 +2510,9 @@ class TestResponseCleanupOnError:
                 response_file.write_text(json.dumps(response_data))
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 with patch(
-                    "claude_unity_bridge.cli.format_response",
+                    "harness_unity_bridge.cli.format_response",
                     side_effect=RuntimeError("Format error"),
                 ):
                     with pytest.raises(RuntimeError, match="Format error"):
@@ -2524,7 +2524,7 @@ class TestResponseCleanupOnError:
 
     def test_cleanup_handles_missing_response_file_on_timeout(self, tmp_path):
         """No error when response file doesn't exist during timeout cleanup"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             import uuid
 
             command_id = str(uuid.uuid4())
@@ -2533,9 +2533,9 @@ class TestResponseCleanupOnError:
                 # Don't create response file — simulates Unity never responding
                 return command_id
 
-            with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+            with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                 with patch(
-                    "claude_unity_bridge.cli.wait_for_response",
+                    "harness_unity_bridge.cli.wait_for_response",
                     side_effect=CommandTimeoutError("Timed out"),
                 ):
                     with pytest.raises(CommandTimeoutError):
@@ -2552,8 +2552,8 @@ class TestMainBuildCommand:
         assert BUILD_DEFAULT_TIMEOUT == 300
 
     def test_main_build_direct(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
-            argv = ["unity-bridge", "build", "--target", "Android", "--timeout", "1"]
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
+            argv = ["harness-unity-bridge", "build", "--target", "Android", "--timeout", "1"]
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
@@ -2582,17 +2582,17 @@ class TestMainBuildCommand:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_build_with_method(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "build",
                 "--method",
-                "MXR.Builder.BuildEntryPoints.BuildQuest",
+                "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                 "--timeout",
                 "1",
             ]
@@ -2600,7 +2600,7 @@ class TestMainBuildCommand:
 
                 def mock_write(action, params):
                     assert action == "build"
-                    assert params["method"] == "MXR.Builder.BuildEntryPoints.BuildQuest"
+                    assert params["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
                     command_id = "b2c3d4e5-f6a7-8901-bcde-f01234567890"
                     response_file = tmp_path / f"response-{command_id}.json"
                     response_file.write_text(
@@ -2617,24 +2617,24 @@ class TestMainBuildCommand:
                                     "totalSeconds": 120.0,
                                     "outputPath": "",
                                     "sizeBytes": 0,
-                                    "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                                    "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                                 },
                             }
                         )
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_build_with_env(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "build",
                 "--method",
-                "MXR.Builder.BuildEntryPoints.BuildQuest",
+                "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                 "--env",
                 "BUILD_TYPE=production",
                 "--env",
@@ -2645,7 +2645,7 @@ class TestMainBuildCommand:
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
-                    assert params["method"] == "MXR.Builder.BuildEntryPoints.BuildQuest"
+                    assert params["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
                     assert "BUILD_TYPE=production" in params["env"]
                     assert "SCRIPTING_BACKEND=il2cpp" in params["env"]
                     command_id = "c3d4e5f6-a7b8-9012-cdef-012345678901"
@@ -2662,17 +2662,17 @@ class TestMainBuildCommand:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_build_with_profile(self, tmp_path):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Create build.json with profile
             config = {
                 "profiles": {
                     "quest": {
-                        "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                        "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                         "env": {"BUILD_TYPE": "development"},
                         "timeout": 600,
                     },
@@ -2682,7 +2682,7 @@ class TestMainBuildCommand:
             build_config.write_text(json.dumps(config))
 
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "build",
                 "--profile",
                 "quest",
@@ -2692,7 +2692,7 @@ class TestMainBuildCommand:
             with patch("sys.argv", argv):
 
                 def mock_write(action, params):
-                    assert params["method"] == "MXR.Builder.BuildEntryPoints.BuildQuest"
+                    assert params["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
                     assert "BUILD_TYPE=development" in params["env"]
                     command_id = "d4e5f6a7-b8c9-0123-defa-123456789012"
                     response_file = tmp_path / f"response-{command_id}.json"
@@ -2708,19 +2708,19 @@ class TestMainBuildCommand:
                     )
                     return command_id
 
-                with patch("claude_unity_bridge.cli.write_command", side_effect=mock_write):
+                with patch("harness_unity_bridge.cli.write_command", side_effect=mock_write):
                     exit_code = main()
                     assert exit_code == EXIT_SUCCESS
 
     def test_main_build_unknown_profile(self, tmp_path, capsys):
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # Create build.json without the requested profile
             config = {"profiles": {"quest": {"method": "SomeMethod"}}}
             build_config = tmp_path / "build.json"
             build_config.write_text(json.dumps(config))
 
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "build",
                 "--profile",
                 "nonexistent",
@@ -2736,10 +2736,10 @@ class TestMainBuildCommand:
 
     def test_main_build_profile_missing_config(self, tmp_path, capsys):
         """Error when --profile used but no build.json exists"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             # No build.json created in tmp_path
             argv = [
-                "unity-bridge",
+                "harness-unity-bridge",
                 "build",
                 "--profile",
                 "quest",
@@ -2755,11 +2755,11 @@ class TestMainBuildCommand:
 
     def test_main_build_profile_timeout_override(self, tmp_path):
         """Profile timeout is applied when user doesn't specify --timeout"""
-        with patch("claude_unity_bridge.cli.UNITY_DIR", tmp_path):
+        with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
             config = {
                 "profiles": {
                     "quest": {
-                        "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+                        "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
                         "timeout": 600,
                     },
                 },
@@ -2768,7 +2768,7 @@ class TestMainBuildCommand:
             build_config.write_text(json.dumps(config))
 
             # Note: NO --timeout argument, so default should be overridden by profile
-            argv = ["unity-bridge", "build", "--profile", "quest"]
+            argv = ["harness-unity-bridge", "build", "--profile", "quest"]
             with patch("sys.argv", argv):
 
                 def mock_execute(action, params, timeout, cleanup=False, verbose=False):
@@ -2776,7 +2776,7 @@ class TestMainBuildCommand:
                     return "✓ Build Succeeded\nDuration: 1.00s"
 
                 with patch(
-                    "claude_unity_bridge.cli.execute_command",
+                    "harness_unity_bridge.cli.execute_command",
                     side_effect=mock_execute,
                 ):
                     exit_code = main()

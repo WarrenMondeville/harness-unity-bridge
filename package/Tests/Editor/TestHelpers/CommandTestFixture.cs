@@ -1,8 +1,8 @@
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using System;
 
-namespace MXR.ClaudeBridge.Tests {
+namespace DeepSeekAI.HarnessBridge.Tests {
     /// <summary>
     /// Base test fixture for all command tests.
     /// Provides common test infrastructure including response capture and request builders.

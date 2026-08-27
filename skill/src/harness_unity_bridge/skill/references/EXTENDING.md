@@ -1,4 +1,4 @@
-# Extending Claude Unity Bridge
+# Extending Harness Unity Bridge
 
 Learn how to add custom commands to the Unity Bridge for project-specific workflows.
 
@@ -29,7 +29,7 @@ The Unity Bridge ships with 5 core commands that work for any Unity project. How
 - **Project-Specific Tools:** Run custom editor tools or validators
 - **CI/CD Integration:** Automate project-specific build/test workflows
 
-By extending the bridge with custom commands, you can automate these workflows through Claude Code.
+By extending the bridge with custom commands, you can automate these workflows through DeepSeek Harness.
 
 ---
 
@@ -38,23 +38,23 @@ By extending the bridge with custom commands, you can automate these workflows t
 The Unity Bridge uses a **Command Pattern** for extensibility:
 
 ```
-Claude Code (Python Script)
+DeepSeek Harness (Python Script)
     ↓ writes
 command.json
     ↓ polls (Unity EditorApplication.update)
-ClaudeBridge.cs (Command Dispatcher)
+HarnessBridge.cs (Command Dispatcher)
     ↓ routes to
 ICommand Implementation (YourCustomCommand.cs)
     ↓ writes
 response-{id}.json
     ↓ reads
-Claude Code (Python Script)
+DeepSeek Harness (Python Script)
 ```
 
 **Key Components:**
 
 1. **ICommand Interface** - All commands implement this interface
-2. **ClaudeBridge.cs** - Dispatches commands to registered handlers
+2. **HarnessBridge.cs** - Dispatches commands to registered handlers
 3. **CommandRequest** - Input data structure
 4. **CommandResponse** - Output data structure
 5. **Python Script** - Handles command execution (no changes needed!)
@@ -70,11 +70,11 @@ Create `Editor/Commands/YourCommand.cs`:
 ```csharp
 using System;
 using System.Diagnostics;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class YourCommand : ICommand {
         public void Execute(
             CommandRequest request,
@@ -83,7 +83,7 @@ namespace MXR.ClaudeBridge.Commands {
         ) {
             var stopwatch = Stopwatch.StartNew();
 
-            Debug.Log("[ClaudeBridge] Executing your custom command");
+            Debug.Log("[HarnessBridge] Executing your custom command");
 
             // Report progress (optional)
             var progressResponse = CommandResponse.Running(request.id, request.action);
@@ -109,7 +109,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
             catch (Exception e) {
                 stopwatch.Stop();
-                Debug.LogError($"[ClaudeBridge] Command failed: {e.Message}");
+                Debug.LogError($"[HarnessBridge] Command failed: {e.Message}");
 
                 onComplete?.Invoke(
                     CommandResponse.Error(request.id, request.action, e.Message)
@@ -126,7 +126,7 @@ namespace MXR.ClaudeBridge.Commands {
 
 ### Step 2: Register Command
 
-In `Editor/ClaudeBridge.cs`, add your command to the dictionary:
+In `Editor/HarnessBridge.cs`, add your command to the dictionary:
 
 ```csharp
 Commands = new Dictionary<string, ICommand> {
@@ -145,10 +145,10 @@ The CLI automatically works with your custom command:
 
 ```bash
 # The script handles all the file I/O, polling, and formatting
-unity-bridge your-command
+harness-unity-bridge your-command
 ```
 
-That's it! Your command is now available through Claude Code.
+That's it! Your command is now available through DeepSeek Harness.
 
 ---
 
@@ -338,13 +338,13 @@ Create a command to build your Unity project for a specific platform:
 using System;
 using System.Diagnostics;
 using System.IO;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class BuildCommand : ICommand {
         public void Execute(
             CommandRequest request,
@@ -357,7 +357,7 @@ namespace MXR.ClaudeBridge.Commands {
             var platformString = request.@params?.targetPlatform ?? "StandaloneWindows64";
             var isDevelopment = request.@params?.developmentBuild ?? false;
 
-            Debug.Log($"[ClaudeBridge] Building for {platformString} (development: {isDevelopment})");
+            Debug.Log($"[HarnessBridge] Building for {platformString} (development: {isDevelopment})");
 
             // Report progress
             var progressResponse = CommandResponse.Running(request.id, request.action);
@@ -384,7 +384,7 @@ namespace MXR.ClaudeBridge.Commands {
 
                 // Check result
                 if (report.summary.result == BuildResult.Succeeded) {
-                    Debug.Log($"[ClaudeBridge] Build succeeded: {report.summary.totalSize} bytes");
+                    Debug.Log($"[HarnessBridge] Build succeeded: {report.summary.totalSize} bytes");
 
                     var response = CommandResponse.Success(
                         request.id,
@@ -403,7 +403,7 @@ namespace MXR.ClaudeBridge.Commands {
                     onComplete?.Invoke(response);
                 }
                 else {
-                    Debug.LogError($"[ClaudeBridge] Build failed: {report.summary.result}");
+                    Debug.LogError($"[HarnessBridge] Build failed: {report.summary.result}");
 
                     var response = CommandResponse.Failure(
                         request.id,
@@ -417,7 +417,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
             catch (Exception e) {
                 stopwatch.Stop();
-                Debug.LogError($"[ClaudeBridge] Build error: {e.Message}");
+                Debug.LogError($"[HarnessBridge] Build error: {e.Message}");
 
                 onComplete?.Invoke(
                     CommandResponse.Error(request.id, request.action, e.Message)
@@ -445,7 +445,7 @@ namespace MXR.ClaudeBridge.Commands {
 }
 ```
 
-**Register in ClaudeBridge.cs:**
+**Register in HarnessBridge.cs:**
 
 ```csharp
 Commands = new Dictionary<string, ICommand> {
@@ -459,7 +459,7 @@ Commands = new Dictionary<string, ICommand> {
 ```bash
 # You'll need to extend the CLI to support --target-platform and --development-build
 # Or create a project-specific wrapper script
-unity-bridge build
+harness-unity-bridge build
 ```
 
 ---
@@ -471,13 +471,13 @@ Load or validate specific scenes:
 ```csharp
 using System;
 using System.Diagnostics;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class LoadSceneCommand : ICommand {
         public void Execute(
             CommandRequest request,
@@ -496,14 +496,14 @@ namespace MXR.ClaudeBridge.Commands {
                 return;
             }
 
-            Debug.Log($"[ClaudeBridge] Loading scene: {scenePath}");
+            Debug.Log($"[HarnessBridge] Loading scene: {scenePath}");
 
             try {
                 // Load scene
                 var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
                 stopwatch.Stop();
 
-                Debug.Log($"[ClaudeBridge] Scene loaded: {scene.name}");
+                Debug.Log($"[HarnessBridge] Scene loaded: {scene.name}");
 
                 var response = CommandResponse.Success(
                     request.id,
@@ -523,7 +523,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
             catch (Exception e) {
                 stopwatch.Stop();
-                Debug.LogError($"[ClaudeBridge] Failed to load scene: {e.Message}");
+                Debug.LogError($"[HarnessBridge] Failed to load scene: {e.Message}");
 
                 onComplete?.Invoke(
                     CommandResponse.Error(request.id, request.action, e.Message)
@@ -545,12 +545,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEditor;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class ValidateAssetsCommand : ICommand {
         public void Execute(
             CommandRequest request,
@@ -559,7 +559,7 @@ namespace MXR.ClaudeBridge.Commands {
         ) {
             var stopwatch = Stopwatch.StartNew();
 
-            Debug.Log("[ClaudeBridge] Validating assets");
+            Debug.Log("[HarnessBridge] Validating assets");
 
             var progressResponse = CommandResponse.Running(request.id, request.action);
             onProgress?.Invoke(progressResponse);
@@ -603,7 +603,7 @@ namespace MXR.ClaudeBridge.Commands {
                 stopwatch.Stop();
 
                 if (issues.Count == 0) {
-                    Debug.Log("[ClaudeBridge] Asset validation passed");
+                    Debug.Log("[HarnessBridge] Asset validation passed");
 
                     var response = CommandResponse.Success(
                         request.id,
@@ -614,7 +614,7 @@ namespace MXR.ClaudeBridge.Commands {
                     onComplete?.Invoke(response);
                 }
                 else {
-                    Debug.LogWarning($"[ClaudeBridge] Asset validation found {issues.Count} issues");
+                    Debug.LogWarning($"[HarnessBridge] Asset validation found {issues.Count} issues");
 
                     var response = CommandResponse.Failure(
                         request.id,
@@ -637,7 +637,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
             catch (Exception e) {
                 stopwatch.Stop();
-                Debug.LogError($"[ClaudeBridge] Asset validation error: {e.Message}");
+                Debug.LogError($"[HarnessBridge] Asset validation error: {e.Message}");
 
                 onComplete?.Invoke(
                     CommandResponse.Error(request.id, request.action, e.Message)
@@ -686,7 +686,7 @@ public class CIBuildCommand : ICommand {
 unity -batchmode -projectPath . -executeMethod YourCICommand.Execute
 
 # Or use the bridge directly
-unity-bridge ci-build
+harness-unity-bridge ci-build
 ```
 
 ### Pre-Commit Hook
@@ -698,8 +698,8 @@ Validate project before committing:
 # .git/hooks/pre-commit
 
 # Run Unity validation
-unity-bridge validate-assets
-unity-bridge run-tests --mode EditMode
+harness-unity-bridge validate-assets
+harness-unity-bridge run-tests --mode EditMode
 
 if [ $? -ne 0 ]; then
     echo "Tests failed! Fix issues before committing."
@@ -746,14 +746,14 @@ try {
     onComplete?.Invoke(CommandResponse.Success(...));
 }
 catch (Exception e) {
-    Debug.LogError($"[ClaudeBridge] Error: {e.Message}");
+    Debug.LogError($"[HarnessBridge] Error: {e.Message}");
     onComplete?.Invoke(CommandResponse.Error(request.id, request.action, e.Message));
 }
 ```
 
 ### 2. Report Progress for Long Operations
 
-Keep Claude informed during long-running operations:
+Keep DeepSeek Harness informed during long-running operations:
 
 ```csharp
 for (int i = 0; i < totalSteps; i++) {
@@ -790,9 +790,9 @@ var response = CommandResponse.Success(
 Help users debug by logging command execution:
 
 ```csharp
-Debug.Log($"[ClaudeBridge] Starting {request.action}");
+Debug.Log($"[HarnessBridge] Starting {request.action}");
 // ... operation
-Debug.Log($"[ClaudeBridge] Completed {request.action}");
+Debug.Log($"[HarnessBridge] Completed {request.action}");
 ```
 
 ### 5. Validate Parameters
@@ -851,7 +851,7 @@ if (EditorApplication.isPlaying) {
 1. **Write Command File:**
 
 ```bash
-cat > .unity-bridge/command.json << EOF
+cat > .harness-unity-bridge/command.json << EOF
 {
   "id": "test-123",
   "action": "your-command",
@@ -869,7 +869,7 @@ EOF
 3. **Read Response:**
 
 ```bash
-cat .unity-bridge/response-test-123.json
+cat .harness-unity-bridge/response-test-123.json
 ```
 
 ### Via Python Script
@@ -877,7 +877,7 @@ cat .unity-bridge/response-test-123.json
 Once registered, test via the CLI:
 
 ```bash
-unity-bridge your-command --verbose
+harness-unity-bridge your-command --verbose
 ```
 
 The `--verbose` flag shows detailed execution progress.
@@ -947,7 +947,7 @@ elif args.command == "load-scene":
 **Symptom:** "Unknown action: your-command" error
 
 **Solution:**
-1. Check that command is registered in `ClaudeBridge.cs`
+1. Check that command is registered in `HarnessBridge.cs`
 2. Verify command name matches exactly (case-sensitive)
 3. Ensure Unity reloaded scripts after adding command
 
@@ -987,7 +987,7 @@ elif args.command == "load-scene":
 Extending the Unity Bridge is straightforward:
 
 1. **Create command class** implementing `ICommand`
-2. **Register command** in `ClaudeBridge.cs`
+2. **Register command** in `HarnessBridge.cs`
 3. **Test with CLI** - it automatically handles file I/O
 
 The architecture is designed for extensibility while keeping the core simple and reliable. Your custom commands benefit from the same rock-solid file protocol, error handling, and progress reporting as the built-in commands.

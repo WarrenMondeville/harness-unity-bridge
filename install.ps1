@@ -1,14 +1,14 @@
-# Claude Unity Bridge - Quick Installer (PowerShell)
+# Harness Unity Bridge - Quick Installer (PowerShell)
 #
 # Usage:
-#   irm https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.ps1 | iex
 #
 # Or download and run:
 #   .\install.ps1
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "Installing Claude Unity Bridge..." -ForegroundColor Cyan
+Write-Host "Installing Harness Unity Bridge..." -ForegroundColor Cyan
 Write-Host ""
 
 # Check Python
@@ -37,7 +37,7 @@ Write-Host "Found Python: $pythonCmd" -ForegroundColor Green
 # Install via pip (user-site to avoid permission issues)
 Write-Host ""
 Write-Host "Installing pip package..." -ForegroundColor Cyan
-& $pythonCmd -m pip install --user --upgrade claude-unity-bridge
+& $pythonCmd -m pip install --user --upgrade harness-unity-bridge
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: pip installation failed" -ForegroundColor Red
     exit 1
@@ -66,8 +66,8 @@ else {
 
 # Install skill
 Write-Host ""
-Write-Host "Installing Claude Code skill..." -ForegroundColor Cyan
-& $pythonCmd -m claude_unity_bridge.cli install-skill
+Write-Host "Installing DeepSeek Harness skill..." -ForegroundColor Cyan
+& $pythonCmd -m harness_unity_bridge.cli install-skill
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Skill installation failed" -ForegroundColor Red
     exit 1
@@ -79,10 +79,10 @@ Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Add the Unity package to your project:"
 Write-Host "     Window > Package Manager > + > Add package from git URL..."
-Write-Host "     https://github.com/ManageXR/claude-unity-bridge.git?path=package"
+Write-Host "     https://github.com/WarrenMondeville/harness-unity-bridge.git?path=package"
 Write-Host ""
-Write-Host "  2. Open Claude Code in your Unity project directory"
+Write-Host "  2. Open DeepSeek Harness in your Unity project directory"
 Write-Host ""
-Write-Host "  3. Ask Claude naturally: " -NoNewline
+Write-Host "  3. Ask DeepSeek Harness naturally: " -NoNewline
 Write-Host '"Run the Unity tests"' -ForegroundColor Yellow
 Write-Host ""

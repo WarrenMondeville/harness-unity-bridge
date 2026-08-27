@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class RunTestsCommand : ICommand {
         public void Execute(CommandRequest request, Action<CommandResponse> onProgress, Action<CommandResponse> onComplete) {
             var stopwatch = Stopwatch.StartNew();
@@ -26,7 +26,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
 
 #if DEBUG
-            Debug.Log($"{ClaudeBridge.LogPrefix} Running tests - Mode: {testMode}, Filter: {request.@params?.filter ?? "none"}");
+            Debug.Log($"{HarnessBridge.LogPrefix} Running tests - Mode: {testMode}, Filter: {request.@params?.filter ?? "none"}");
 #endif
 
             var response = CommandResponse.Running(request.id, request.action);
@@ -83,7 +83,7 @@ namespace MXR.ClaudeBridge.Commands {
             public void RunStarted(ITestAdaptor testsToRun) {
                 _total = CountTests(testsToRun);
 #if DEBUG
-                Debug.Log($"{ClaudeBridge.LogPrefix} Test run started - {_total} tests");
+                Debug.Log($"{HarnessBridge.LogPrefix} Test run started - {_total} tests");
 #endif
 
                 var response = CommandResponse.Running(_commandId, "run-tests");
@@ -97,7 +97,7 @@ namespace MXR.ClaudeBridge.Commands {
             public void RunFinished(ITestResultAdaptor result) {
                 _stopwatch.Stop();
 #if DEBUG
-                Debug.Log($"{ClaudeBridge.LogPrefix} Test run finished - Passed: {_passed}, Failed: {_failed}, Skipped: {_skipped}");
+                Debug.Log($"{HarnessBridge.LogPrefix} Test run finished - Passed: {_passed}, Failed: {_failed}, Skipped: {_skipped}");
 #endif
 
                 var response = _failed > 0

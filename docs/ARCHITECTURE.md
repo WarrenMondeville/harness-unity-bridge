@@ -5,8 +5,8 @@
 ```
 package/                     # Unity package (UPM)
 ├── Editor/
-│   ├── ClaudeBridge.cs          # Main coordinator
-│   ├── ClaudeBridge.asmdef      # Assembly definition
+│   ├── HarnessBridge.cs          # Main coordinator
+│   ├── HarnessBridge.asmdef      # Assembly definition
 │   ├── Commands/
 │   │   ├── ICommand.cs          # Command interface
 │   │   ├── RunTestsCommand.cs   # Test execution
@@ -19,9 +19,10 @@ package/                     # Unity package (UPM)
 │       └── CommandResponse.cs   # Response DTO
 └── Tests/                   # Unity tests
 
-skill/                       # Claude Code skill (Python)
-├── scripts/
-│   └── cli.py               # Deterministic command script
+skill/                       # DeepSeek Harness skill (Python)
+├── src/
+│   └── harness_unity_bridge/
+│       └── cli.py           # Deterministic command script
 ├── references/
 │   ├── COMMANDS.md          # Complete command specification
 │   └── EXTENDING.md         # Guide for adding custom commands

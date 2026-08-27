@@ -1,8 +1,8 @@
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace MXR.ClaudeBridge.Tests.Models {
+namespace DeepSeekAI.HarnessBridge.Tests.Models {
     /// <summary>
     /// Tests for CommandResponse factory methods and serialization.
     /// Focus: Verify factory methods create correct response structures

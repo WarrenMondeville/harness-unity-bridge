@@ -1,7 +1,7 @@
 using System;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public interface ICommand {
         void Execute(CommandRequest request, Action<CommandResponse> onProgress, Action<CommandResponse> onComplete);
     }

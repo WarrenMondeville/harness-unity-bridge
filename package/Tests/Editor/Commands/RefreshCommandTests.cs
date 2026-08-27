@@ -1,9 +1,9 @@
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using UnityEditor;
 
-namespace MXR.ClaudeBridge.Tests.Commands {
+namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
     /// Tests for RefreshCommand.
     /// Focus: Tests REAL behavior (progress reporting, error handling, duration tracking)

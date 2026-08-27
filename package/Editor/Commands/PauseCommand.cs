@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class PauseCommand : ICommand {
         private readonly IEditorPlayMode _editor;
 
@@ -27,7 +27,7 @@ namespace MXR.ClaudeBridge.Commands {
                 stopwatch.Stop();
 
 #if DEBUG
-                Debug.Log($"{ClaudeBridge.LogPrefix} Pause toggled: isPaused={_editor.IsPaused}");
+                Debug.Log($"{HarnessBridge.LogPrefix} Pause toggled: isPaused={_editor.IsPaused}");
 #endif
 
                 var response = CommandResponse.Success(request.id, request.action, stopwatch.ElapsedMilliseconds);
@@ -41,7 +41,7 @@ namespace MXR.ClaudeBridge.Commands {
             }
             catch (Exception e) {
                 stopwatch.Stop();
-                Debug.LogError($"{ClaudeBridge.LogPrefix} Pause toggle failed: {e.Message}");
+                Debug.LogError($"{HarnessBridge.LogPrefix} Pause toggle failed: {e.Message}");
                 onComplete?.Invoke(CommandResponse.Error(request.id, request.action, e.Message));
             }
         }

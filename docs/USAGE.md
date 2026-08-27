@@ -2,13 +2,13 @@
 
 ## How It Works
 
-ClaudeBridge uses a file-based protocol for communication:
+HarnessBridge uses a file-based protocol for communication:
 
-1. **Command File**: Claude Code writes commands to `.unity-bridge/command.json`
+1. **Command File**: DeepSeek Harness writes commands to `.harness-unity-bridge/command.json`
 2. **Processing**: Unity Editor polls for commands and executes them
-3. **Response File**: Results are written to `.unity-bridge/response-{id}.json`
+3. **Response File**: Results are written to `.harness-unity-bridge/response-{id}.json`
 
-This approach enables multi-project support - each Unity project has its own `.unity-bridge/` directory, allowing multiple agents to work on different projects simultaneously.
+This approach enables multi-project support - each Unity project has its own `.harness-unity-bridge/` directory, allowing multiple agents to work on different projects simultaneously.
 
 ## Commands
 
@@ -20,7 +20,7 @@ This approach enables multi-project support - each Unity project has its own `.u
   "action": "run-tests",
   "params": {
     "testMode": "EditMode",
-    "filter": "MXR.Tests"
+    "filter": "DeepSeekAI.Tests"
   }
 }
 ```
@@ -102,15 +102,15 @@ All commands return a response in this format:
 
 ## Tools Menu
 
-The package adds menu items under `Tools > Claude Bridge`:
+The package adds menu items under `Tools > DeepSeek Harness Bridge`:
 
 - **Show Status** - Display current bridge status in console
 - **Cleanup Old Responses** - Delete response files older than 1 hour
 - **Reset Processing State** - Clear stuck processing state
 
-## Using with Claude Code
+## Using with DeepSeek Harness
 
-Once the skill is installed, simply ask Claude Code naturally:
+Once the skill is installed, simply ask DeepSeek Harness naturally:
 
 - "Run the Unity tests in EditMode"
 - "Check if there are any compilation errors"

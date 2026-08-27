@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Claude Unity Bridge - Command Execution Script
+Harness Unity Bridge - Command Execution Script
 
 Rock-solid, deterministic command execution for Unity Editor operations.
 Handles UUID generation, file-based polling, response parsing, and cleanup.
 
-Also provides skill installation commands for Claude Code integration.
+Also provides skill installation commands for DeepSeek Harness integration.
 """
 
 import argparse
@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 # Constants
-UNITY_DIR = Path.cwd() / ".unity-bridge"
+UNITY_DIR = Path.cwd() / ".harness-unity-bridge"
 DEFAULT_TIMEOUT = 30
 MIN_SLEEP = 0.1
 MAX_SLEEP = 1.0
@@ -34,10 +34,10 @@ BUILD_DEFAULT_TIMEOUT = 300  # 5 minutes default for builds
 
 def load_build_config(unity_bridge_dir: Path) -> Optional[Dict[str, Any]]:
     """
-    Load optional build configuration from .unity-bridge/build.json.
+    Load optional build configuration from .harness-unity-bridge/build.json.
 
     Args:
-        unity_bridge_dir: Path to the .unity-bridge directory
+        unity_bridge_dir: Path to the .harness-unity-bridge directory
 
     Returns:
         Parsed config dict, or None if file doesn't exist or is invalid.
@@ -88,20 +88,20 @@ def _validate_command_id(command_id: str) -> None:
 
 
 def check_gitignore_and_notify():
-    """Print a notice if .unity-bridge/ is not in .gitignore."""
+    """Print a notice if .harness-unity-bridge/ is not in .gitignore."""
     gitignore_path = Path.cwd() / ".gitignore"
 
     if gitignore_path.exists():
         try:
             content = gitignore_path.read_text()
             # Check for various patterns that would ignore the directory
-            if ".unity-bridge" in content:
+            if ".harness-unity-bridge" in content:
                 return  # Already ignored
         except Exception:
             pass  # If we can't read gitignore, show the notice
 
     print(
-        "\nNote: Add '.unity-bridge/' to your .gitignore to avoid committing runtime files.\n",
+        "\nNote: Add '.harness-unity-bridge/' to your .gitignore to avoid committing runtime files.\n",
         file=sys.stderr,
     )
 
@@ -125,7 +125,7 @@ def write_command(action: str, params: Dict[str, Any]) -> str:
 
     # Security: Ensure UNITY_DIR is not a symlink (prevent symlink attacks)
     if UNITY_DIR.exists() and UNITY_DIR.is_symlink():
-        raise UnityCommandError("Security error: .unity-bridge cannot be a symlink")
+        raise UnityCommandError("Security error: .harness-unity-bridge cannot be a symlink")
 
     # Ensure directory exists
     dir_existed = UNITY_DIR.exists()
@@ -670,7 +670,7 @@ def get_skill_source_dir() -> Optional[Path]:
 
         # For Python 3.9+
         if hasattr(resources, "files"):
-            package_dir = resources.files("claude_unity_bridge")
+            package_dir = resources.files("harness_unity_bridge")
             skill_dir = Path(str(package_dir)) / "skill"
             if skill_dir.exists():
                 return skill_dir
@@ -686,19 +686,19 @@ def get_skill_source_dir() -> Optional[Path]:
     return None
 
 
-def get_claude_skills_dir() -> Path:
-    """Get the Claude Code skills directory path."""
-    return Path.home() / ".claude" / "skills"
+def get_dsh_skills_dir() -> Path:
+    """Get the DeepSeek Harness skills directory path."""
+    return Path.home() / ".dsh" / "skills"
 
 
 def get_skill_target_dir() -> Path:
     """Get the target directory for the unity-bridge skill."""
-    return get_claude_skills_dir() / "unity-bridge"
+    return get_dsh_skills_dir() / "unity-bridge"
 
 
 def install_skill(verbose: bool = False) -> int:
     """
-    Install the Claude Code skill by creating a symlink (with copy fallback on Windows).
+    Install the DeepSeek Harness skill by creating a symlink (with copy fallback on Windows).
 
     Returns:
         Exit code (0 for success, 1 for error).
@@ -708,7 +708,7 @@ def install_skill(verbose: bool = False) -> int:
         print("Error: Could not find skill files in package.", file=sys.stderr)
         print("This may indicate a corrupted installation.", file=sys.stderr)
         print(
-            "Try reinstalling: pip install --force-reinstall claude-unity-bridge",
+            "Try reinstalling: pip install --force-reinstall harness-unity-bridge",
             file=sys.stderr,
         )
         return EXIT_ERROR
@@ -723,7 +723,7 @@ def install_skill(verbose: bool = False) -> int:
         return EXIT_ERROR
 
     # Create skills directory if it doesn't exist
-    skills_dir = get_claude_skills_dir()
+    skills_dir = get_dsh_skills_dir()
     try:
         skills_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
@@ -798,7 +798,7 @@ def install_skill(verbose: bool = False) -> int:
         print(f"✓ Skill installed (copy): {target_dir}")
         print()
         print("Note: Using directory copy instead of symlink.")
-        print("To update the skill, re-run: python -m claude_unity_bridge.cli install-skill")
+        print("To update the skill, re-run: python -m harness_unity_bridge.cli install-skill")
         if platform.system() == "Windows":
             print()
             print("To enable symlinks (optional), enable Developer Mode:")
@@ -807,8 +807,8 @@ def install_skill(verbose: bool = False) -> int:
         print(f"✓ Skill installed (symlink): {target_dir} -> {source_dir}")
 
     print()
-    print("The Claude Code skill is now available.")
-    print("Restart Claude Code to load the skill, then ask Claude naturally:")
+    print("The DeepSeek Harness skill is now available.")
+    print("Restart DeepSeek Harness to load the skill, then ask DeepSeek Harness naturally:")
     print('  "Run the Unity tests"')
     print('  "Check for compilation errors"')
     print()
@@ -818,7 +818,7 @@ def install_skill(verbose: bool = False) -> int:
 
 def uninstall_skill(verbose: bool = False) -> int:
     """
-    Uninstall the Claude Code skill by removing the symlink or copied directory.
+    Uninstall the DeepSeek Harness skill by removing the symlink or copied directory.
 
     Returns:
         Exit code (0 for success, 1 for error).
@@ -880,7 +880,7 @@ def update_package(verbose: bool = False) -> int:
     Returns:
         Exit code (0 for success, 1 for error).
     """
-    print("Updating claude-unity-bridge...")
+    print("Updating harness-unity-bridge...")
 
     try:
         # Run pip install --upgrade
@@ -891,7 +891,7 @@ def update_package(verbose: bool = False) -> int:
                 "pip",
                 "install",
                 "--upgrade",
-                "claude-unity-bridge",
+                "harness-unity-bridge",
             ],
             capture_output=not verbose,
             text=True,
@@ -919,7 +919,7 @@ def execute_health_check(timeout: int, verbose: bool) -> int:
     """Verify Unity Bridge is set up correctly."""
     print("Checking Unity Bridge setup...")
 
-    # Check 1: Does .unity-bridge directory exist?
+    # Check 1: Does .harness-unity-bridge directory exist?
     if not UNITY_DIR.exists():
         print("✗ Unity Bridge not detected")
         print(f"  Directory not found: {UNITY_DIR}")
@@ -943,9 +943,21 @@ def execute_health_check(timeout: int, verbose: bool) -> int:
         return EXIT_TIMEOUT
 
 
+def _configure_output_encoding() -> None:
+    """Avoid UnicodeEncodeError when printing ✓/✗/○ on Windows GBK consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
 def main():
+    _configure_output_encoding()
     parser = argparse.ArgumentParser(
-        description="Execute Unity Editor commands via Claude Unity Bridge",
+        description="Execute Unity Editor commands via Harness Unity Bridge",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Unity Commands:
@@ -961,8 +973,8 @@ Unity Commands:
   health-check       Verify Unity Bridge setup
 
 Skill Commands:
-  install-skill      Install Claude Code skill
-  uninstall-skill    Uninstall Claude Code skill
+  install-skill      Install DeepSeek Harness skill
+  uninstall-skill    Uninstall DeepSeek Harness skill
   update             Update package and reinstall skill
 
 Examples:
@@ -976,7 +988,7 @@ Examples:
   %(prog)s step
   %(prog)s build
   %(prog)s build --target Android --development
-  %(prog)s build --method MXR.Builder.BuildEntryPoints.BuildQuest
+  %(prog)s build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest
   %(prog)s build --profile quest
   %(prog)s health-check
   %(prog)s install-skill
@@ -1040,7 +1052,7 @@ Examples:
     )
     parser.add_argument(
         "--profile",
-        help="Build profile name from .unity-bridge/build.json (for build)",
+        help="Build profile name from .harness-unity-bridge/build.json (for build)",
     )
     parser.add_argument(
         "--output",
@@ -1113,7 +1125,7 @@ Examples:
             if build_config is None:
                 print(
                     f"Error: Build profile '{args.profile}' requested but "
-                    f"no .unity-bridge/build.json found.",
+                    f"no .harness-unity-bridge/build.json found.",
                     file=sys.stderr,
                 )
                 return EXIT_ERROR

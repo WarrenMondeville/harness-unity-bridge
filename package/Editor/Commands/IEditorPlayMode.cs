@@ -1,4 +1,4 @@
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public interface IEditorPlayMode {
         bool IsPlaying { get; set; }
         bool IsPaused { get; set; }

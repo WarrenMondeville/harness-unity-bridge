@@ -1,20 +1,21 @@
 {
-  "name": "com.mxr.claude-bridge",
+  "name": "com.deepseekai.harness-unity-bridge",
   "version": "0.3.0",
-  "displayName": "ManageXR Claude Unity Bridge",
-  "description": "File-based bridge enabling Claude Code to trigger Unity Editor operations (tests, compile, refresh) in a running editor instance.",
+  "displayName": "DeepSeek Harness Unity Bridge",
+  "description": "File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations (tests, compile, refresh) in a running editor instance.",
   "unity": "2021.3",
-  "documentationUrl": "https://github.com/ManageXR/claude-unity-bridge",
+  "documentationUrl": "https://github.com/WarrenMondeville/harness-unity-bridge",
   "dependencies": {},
   "keywords": [
-    "claude",
+    "deepseek",
+    "harness",
+    "unity",
     "ai",
     "testing",
     "automation"
   ],
   "author": {
-      "name": "Mighty Immersion, Inc",
-      "email": "support@managexr.com",
-      "url": "https://www.managexr.com"
+      "name": "DeepSeek Harness",
+      "url": "https://github.com/WarrenMondeville/harness-unity-bridge"
   }
 }

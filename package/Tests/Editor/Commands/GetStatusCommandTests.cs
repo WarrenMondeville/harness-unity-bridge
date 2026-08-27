@@ -1,10 +1,10 @@
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-namespace MXR.ClaudeBridge.Tests.Commands {
+namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
     /// Tests for GetStatusCommand.
     /// Focus: Tests REAL behavior (response construction, editor state capture, JSON serialization)

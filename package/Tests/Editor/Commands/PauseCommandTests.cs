@@ -1,9 +1,9 @@
 using Moq;
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 
-namespace MXR.ClaudeBridge.Tests.Commands {
+namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
     /// Tests for PauseCommand using Moq to mock IEditorPlayMode.
     /// Focus: Precondition check (must be playing), toggle behavior, response construction.

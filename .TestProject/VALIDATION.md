@@ -13,8 +13,8 @@
 
 ### ✅ Package Loading
 - Package shows in Unity Package Manager as "Local"
-- ClaudeBridge initialized successfully
-- Command directory created: `.TestProject/.unity-bridge/`
+- HarnessBridge initialized successfully
+- Command directory created: `.TestProject/.harness-unity-bridge/`
 - Unity Console shows initialization messages
 
 ### ✅ Bridge Protocol
@@ -52,7 +52,7 @@ All bridge commands tested and working:
    Output: 0 tests (expected - package has no Unity tests yet, see AGENTS.md)
 
 ### ✅ Testables Configuration
-- Added `"testables": ["com.mxr.claude-bridge"]` to manifest.json
+- Added `"testables": ["com.deepseekai.harness-unity-bridge"]` to manifest.json
 - Unity Test Runner can now discover package tests
 - Ready for future Unity C# test implementation
 
@@ -64,30 +64,30 @@ All bridge commands tested and working:
 
 ### ❌ Wrong (times out):
 ```bash
-cd /path/to/claude-unity-bridge
+cd /path/to/harness-unity-bridge
 python3 skill/scripts/cli.py get-status
 ```
 
-This writes to `/path/to/claude-unity-bridge/.unity-bridge/` but Unity looks at project's `.unity-bridge/`.
+This writes to `/path/to/harness-unity-bridge/.harness-unity-bridge/` but Unity looks at project's `.harness-unity-bridge/`.
 
 ### ✅ Correct:
 ```bash
-cd /path/to/claude-unity-bridge/.TestProject
+cd /path/to/harness-unity-bridge/.TestProject
 python3 ../skill/scripts/cli.py get-status
 ```
 
-This writes to `.TestProject/.unity-bridge/` where Unity is polling.
+This writes to `.TestProject/.harness-unity-bridge/` where Unity is polling.
 
 ---
 
 ## Usage Guide for Agents
 
-When working on the Claude Unity Bridge package:
+When working on the Harness Unity Bridge package:
 
 ### 1. Open .TestProject in Unity
 
 ```bash
-open -a "Unity" /path/to/claude-unity-bridge/.TestProject/
+open -a "Unity" /path/to/harness-unity-bridge/.TestProject/
 ```
 
 Wait for Unity to fully load (2-3 minutes first time).
@@ -130,7 +130,7 @@ pytest tests/test_cli.py -v
 
 ### 5. Check Unity Console
 
-Monitor Unity Console for `[ClaudeBridge]` log messages:
+Monitor Unity Console for `[HarnessBridge]` log messages:
 - Command processing
 - Execution results
 - Any errors
@@ -141,7 +141,7 @@ Monitor Unity Console for `[ClaudeBridge]` log messages:
 
 ```
 .TestProject/
-├── .unity-bridge/          # Bridge protocol directory
+├── .harness-unity-bridge/          # Bridge protocol directory
 │   ├── command.json        # Written by Python script
 │   └── response-*.json     # Written by Unity, read by Python
 ├── Assets/                 # Unity assets (gitignored)
@@ -162,22 +162,22 @@ Monitor Unity Console for `[ClaudeBridge]` log messages:
 During testing, Unity Console showed:
 
 ```
-[ClaudeBridge] Status:
-  Command directory: /Users/.../claude-unity-bridge/.TestProject/.unity-bridge
+[HarnessBridge] Status:
+  Command directory: /Users/.../harness-unity-bridge/.TestProject/.harness-unity-bridge
   Is processing: False
   Current command ID: none
   Command file exists: False
   Response files: 0
 
-[ClaudeBridge] Processing command: get-status (id: 81f1f4c1-73a6-4867-8521-8940f12b6601)
-[ClaudeBridge] Getting editor status
+[HarnessBridge] Processing command: get-status (id: 81f1f4c1-73a6-4867-8521-8940f12b6601)
+[HarnessBridge] Getting editor status
 
-[ClaudeBridge] Processing command: refresh (id: 1bcf7104-a1c9-4430-bda0-c90128c217c8)
-[ClaudeBridge] Refreshing asset database
-[ClaudeBridge] Asset database refresh completed
+[HarnessBridge] Processing command: refresh (id: 1bcf7104-a1c9-4430-bda0-c90128c217c8)
+[HarnessBridge] Refreshing asset database
+[HarnessBridge] Asset database refresh completed
 
-[ClaudeBridge] Processing command: get-console-logs (id: d1269adb-1c5d-46de-9c48-d8000e9fb9cf)
-[ClaudeBridge] Getting console logs
+[HarnessBridge] Processing command: get-console-logs (id: d1269adb-1c5d-46de-9c48-d8000e9fb9cf)
+[HarnessBridge] Getting console logs
 ```
 
 All commands processed successfully with proper callbacks.
@@ -186,9 +186,9 @@ All commands processed successfully with proper callbacks.
 
 ## Success Criteria - All Met ✅
 
-- [x] Unity Package Manager shows "Claude Unity Bridge" as "Local" package
-- [x] Unity Console shows `[ClaudeBridge]` initialization and processing messages
-- [x] `.unity-bridge/` directory created by Unity on startup
+- [x] Unity Package Manager shows "Harness Unity Bridge" as "Local" package
+- [x] Unity Console shows `[HarnessBridge]` initialization and processing messages
+- [x] `.harness-unity-bridge/` directory created by Unity on startup
 - [x] `python3 ../skill/scripts/cli.py get-status` returns success (exit code 0)
 - [x] Response shows correct Unity version and project state
 - [x] All bridge commands work (compile, refresh, get-console-logs, run-tests)
@@ -225,6 +225,6 @@ The integration test harness is **ready for use**. When working on Unity Bridge:
 
 ---
 
-**Validation Completed By**: Claude Sonnet 4.5
+**Validation Completed By**: DeepSeek Harness Sonnet 4.5
 **All Tests Passed**: 2026-01-26
 **Integration Harness Status**: Production Ready ✅

@@ -1,8 +1,8 @@
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using System;
 using System.Collections.Generic;
 
-namespace MXR.ClaudeBridge.Tests {
+namespace DeepSeekAI.HarnessBridge.Tests {
     /// <summary>
     /// Utility class to capture command callbacks (onProgress and onComplete).
     /// Used in tests to verify command behavior without relying on actual file I/O.

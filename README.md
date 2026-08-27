@@ -1,19 +1,21 @@
 #  Harness Unity Bridge
 
+[English](README.md) | [中文](README.zh.md)
+
 ![Unity 2021.3+](https://img.shields.io/badge/Unity-2021.3%2B-black.svg)
 ![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)
 
-[![PyPI](https://img.shields.io/pypi/v/claude-unity-bridge)](https://pypi.org/project/claude-unity-bridge/)
-[![GitHub release](https://img.shields.io/github/v/release/ManageXR/claude-unity-bridge)](https://github.com/ManageXR/claude-unity-bridge/releases)
-[![CI](https://github.com/ManageXR/claude-unity-bridge/actions/workflows/test-skill.yml/badge.svg)](https://github.com/ManageXR/claude-unity-bridge/actions/workflows/test-skill.yml)
+[![PyPI](https://img.shields.io/pypi/v/harness-unity-bridge)](https://pypi.org/project/harness-unity-bridge/)
+[![GitHub release](https://img.shields.io/github/v/release/WarrenMondeville/harness-unity-bridge)](https://github.com/WarrenMondeville/harness-unity-bridge/releases)
+[![CI](https://github.com/WarrenMondeville/harness-unity-bridge/actions/workflows/test-skill.yml/badge.svg)](https://github.com/WarrenMondeville/harness-unity-bridge/actions/workflows/test-skill.yml)
 
-[![PyPI Downloads](https://img.shields.io/pypi/dm/claude-unity-bridge)](https://pypi.org/project/claude-unity-bridge/)
-[![codecov](https://codecov.io/gh/ManageXR/claude-unity-bridge/graph/badge.svg?token=3PHF2GXHON)](https://codecov.io/gh/ManageXR/claude-unity-bridge)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/harness-unity-bridge)](https://pypi.org/project/harness-unity-bridge/)
+[![codecov](https://codecov.io/gh/WarrenMondeville/harness-unity-bridge/graph/badge.svg?token=3PHF2GXHON)](https://codecov.io/gh/WarrenMondeville/harness-unity-bridge)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 
 
-File-based bridge enabling [Claude Code](https://docs.anthropic.com/en/docs/claude-code) to trigger Unity Editor operations in a running editor instance.
+File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations in a running editor instance.
 
 ## ✨ Features
 
@@ -30,12 +32,12 @@ File-based bridge enabling [Claude Code](https://docs.anthropic.com/en/docs/clau
 
 **macOS / Linux / Git Bash:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.ps1 | iex
 ```
 
 ### 2. Add to Your Unity Project(s)
@@ -43,12 +45,12 @@ irm https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.
 In Unity: `Window > Package Manager > + > Add package from git URL...`
 
 ```
-https://github.com/ManageXR/claude-unity-bridge.git?path=package
+https://github.com/WarrenMondeville/harness-unity-bridge.git?path=package
 ```
 
 ### 3. Use It
 
-Open Claude Code in your Unity project directory:
+Open DeepSeek Harness in your Unity project directory:
 
 ```
 "Run the Unity tests"
@@ -59,34 +61,34 @@ Open Claude Code in your Unity project directory:
 Or use the CLI directly:
 
 ```bash
-unity-bridge run-tests --mode EditMode
-unity-bridge compile
-unity-bridge get-console-logs --limit 10
+harness-unity-bridge run-tests --mode EditMode
+harness-unity-bridge compile
+harness-unity-bridge get-console-logs --limit 10
 ```
 
 ### Updating
 
 ```bash
-unity-bridge update
+harness-unity-bridge update
 ```
 
 ## ⚙️ How It Works
 
 ```
-Claude Code → unity-bridge CLI → .unity-bridge/command.json → Unity Editor → response.json
+DeepSeek Harness → harness-unity-bridge CLI → .harness-unity-bridge/command.json → Unity Editor → response.json
 ```
 
-1. Claude Code (or you) runs `unity-bridge` commands
-2. The CLI writes commands to `.unity-bridge/command.json`
+1. DeepSeek Harness (or you) runs `harness-unity-bridge` commands
+2. The CLI writes commands to `.harness-unity-bridge/command.json`
 3. Unity Editor polls and executes commands
-4. Results appear in `.unity-bridge/response-{id}.json`
+4. Results appear in `.harness-unity-bridge/response-{id}.json`
 
-Each Unity project has its own `.unity-bridge/` directory, enabling multi-project support.
+Each Unity project has its own `.harness-unity-bridge/` directory, enabling multi-project support.
 
 ## 📚 Documentation
 
 - [Installation Options](docs/INSTALLATION.md) — Alternative installation methods
 - [Usage Guide](docs/USAGE.md) — Command formats and response details
 - [Architecture](docs/ARCHITECTURE.md) — Project structure and design
-- [Skill Reference](skill/SKILL.md) — Claude Code skill documentation
+- [Skill Reference](skill/SKILL.md) — DeepSeek Harness skill documentation
 - [Command Reference](skill/references/COMMANDS.md) — Complete command specification

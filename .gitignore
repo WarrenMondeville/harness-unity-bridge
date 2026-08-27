@@ -24,7 +24,7 @@ __pycache__/
 htmlcov/
 
 # Bridge runtime directory
-.unity-bridge/
+.harness-unity-bridge/
 
 # Secrets and environment files
 .env

@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using UnityEditor;
 using UnityEngine;
 
-namespace MXR.ClaudeBridge {
+namespace DeepSeekAI.HarnessBridge {
     [InitializeOnLoad]
-    public static class ClaudeBridge {
-        public const string LogPrefix = "[ClaudeBridge]";
+    public static class HarnessBridge {
+        public const string LogPrefix = "[HarnessBridge]";
 
         private static readonly string CommandDir;
         private static readonly string CommandFilePath;
@@ -32,8 +32,8 @@ namespace MXR.ClaudeBridge {
             "get-console-logs"
         };
 
-        static ClaudeBridge() {
-            CommandDir = Path.Combine(Application.dataPath, "..", ".unity-bridge");
+        static HarnessBridge() {
+            CommandDir = Path.Combine(Application.dataPath, "..", ".harness-unity-bridge");
             CommandFilePath = Path.Combine(CommandDir, "command.json");
 
             var playMode = new EditorPlayMode();
@@ -272,7 +272,7 @@ namespace MXR.ClaudeBridge {
         }
 
         // Cleanup utility - can be called from menu
-        [MenuItem("Tools/Claude Bridge/Cleanup Old Responses")]
+        [MenuItem("Tools/DeepSeek Harness Bridge/Cleanup Old Responses")]
         private static void CleanupOldResponses() {
             if (!Directory.Exists(CommandDir)) return;
 
@@ -293,7 +293,7 @@ namespace MXR.ClaudeBridge {
             }
         }
 
-        [MenuItem("Tools/Claude Bridge/Reset Processing State")]
+        [MenuItem("Tools/DeepSeek Harness Bridge/Reset Processing State")]
         private static void ResetProcessingStateMenu() {
             if (_isProcessingCommand) {
                 Debug.Log($"{LogPrefix} Manually resetting processing state (was processing: {_currentCommandId})");
@@ -303,7 +303,7 @@ namespace MXR.ClaudeBridge {
             }
         }
 
-        [MenuItem("Tools/Claude Bridge/Show Status")]
+        [MenuItem("Tools/DeepSeek Harness Bridge/Show Status")]
         private static void ShowStatus() {
             Debug.Log($"{LogPrefix} Status:");
             Debug.Log($"  Command directory: {CommandDir}");

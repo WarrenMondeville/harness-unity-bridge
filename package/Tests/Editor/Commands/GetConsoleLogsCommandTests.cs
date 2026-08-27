@@ -1,9 +1,9 @@
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using System.Reflection;
 
-namespace MXR.ClaudeBridge.Tests.Commands {
+namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
     /// Tests for GetConsoleLogsCommand.
     /// Focus: Tests REAL behavior (parameter parsing, response structure, synchronous execution)

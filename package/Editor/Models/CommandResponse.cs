@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MXR.ClaudeBridge.Models {
+namespace DeepSeekAI.HarnessBridge.Models {
     [Serializable]
     public class CommandResponse {
         public string id;

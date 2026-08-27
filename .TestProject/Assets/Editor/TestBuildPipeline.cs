@@ -5,9 +5,9 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace ClaudeBridge.TestProject {
+namespace HarnessBridge.TestProject {
     /// <summary>
-    /// Test build entry points for validating the Claude Unity Bridge build command.
+    /// Test build entry points for validating the Harness Unity Bridge build command.
     /// Provides both a setup method (to create a test scene) and a custom build method
     /// (to test method invocation via reflection).
     /// </summary>
@@ -18,7 +18,7 @@ namespace ClaudeBridge.TestProject {
         /// <summary>
         /// Creates a minimal test scene and adds it to EditorBuildSettings.
         /// Call this before testing direct builds.
-        /// Usage: unity-bridge build --method ClaudeBridge.TestProject.TestBuildPipeline.SetupTestScene
+        /// Usage: harness-unity-bridge build --method HarnessBridge.TestProject.TestBuildPipeline.SetupTestScene
         /// </summary>
         public static void SetupTestScene() {
             Debug.Log($"[{TAG}] Setting up test scene...");
@@ -44,7 +44,7 @@ namespace ClaudeBridge.TestProject {
         /// <summary>
         /// Custom build method that demonstrates method invocation via the bridge.
         /// Builds a StandaloneOSX player using the test scene.
-        /// Usage: unity-bridge build --method ClaudeBridge.TestProject.TestBuildPipeline.BuildStandalone
+        /// Usage: harness-unity-bridge build --method HarnessBridge.TestProject.TestBuildPipeline.BuildStandalone
         /// </summary>
         public static void BuildStandalone() {
             Debug.Log($"[{TAG}] Starting custom standalone build...");

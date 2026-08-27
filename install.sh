@@ -1,15 +1,15 @@
 #!/bin/bash
-# Claude Unity Bridge - Quick Installer
+# Harness Unity Bridge - Quick Installer
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.sh | bash
 #
 # Or download and run:
 #   ./install.sh
 
 set -e
 
-echo "Installing Claude Unity Bridge..."
+echo "Installing Harness Unity Bridge..."
 echo
 
 # Check Python
@@ -20,13 +20,13 @@ fi
 
 # Install via pip
 echo "Installing pip package..."
-python3 -m pip install --user --upgrade claude-unity-bridge
+python3 -m pip install --user --upgrade harness-unity-bridge
 
 # Get Python user scripts directory
 PYTHON_BIN="$(python3 -m site --user-base)/bin"
 
 # Add to PATH if not already there
-if ! command -v unity-bridge &> /dev/null; then
+if ! command -v harness-unity-bridge &> /dev/null; then
     # Determine shell config file
     if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
         SHELL_RC="$HOME/.zshrc"
@@ -40,7 +40,7 @@ if ! command -v unity-bridge &> /dev/null; then
     else
         echo "Adding Python scripts to PATH in $SHELL_RC..."
         echo "" >> "$SHELL_RC"
-        echo "# Added by Claude Unity Bridge installer" >> "$SHELL_RC"
+        echo "# Added by Harness Unity Bridge installer" >> "$SHELL_RC"
         echo "export PATH=\"\$PATH:$PYTHON_BIN\"" >> "$SHELL_RC"
     fi
 
@@ -50,8 +50,8 @@ fi
 
 # Install skill
 echo
-echo "Installing Claude Code skill..."
-python3 -m claude_unity_bridge.cli install-skill
+echo "Installing DeepSeek Harness skill..."
+python3 -m harness_unity_bridge.cli install-skill
 
 echo
 echo "Installation complete!"
@@ -59,9 +59,9 @@ echo
 echo "Next steps:"
 echo "  1. Add the Unity package to your project:"
 echo "     Window > Package Manager > + > Add package from git URL..."
-echo "     https://github.com/ManageXR/claude-unity-bridge.git?path=package"
+echo "     https://github.com/WarrenMondeville/harness-unity-bridge.git?path=package"
 echo
-echo "  2. Open Claude Code in your Unity project directory"
+echo "  2. Open DeepSeek Harness in your Unity project directory"
 echo
-echo "  3. Ask Claude naturally: \"Run the Unity tests\""
+echo "  3. Ask DeepSeek Harness naturally: \"Run the Unity tests\""
 echo

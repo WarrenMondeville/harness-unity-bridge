@@ -1,20 +1,20 @@
-# Claude Unity Bridge
+# Harness Unity Bridge
 
-[![PyPI](https://img.shields.io/pypi/v/claude-unity-bridge)](https://pypi.org/project/claude-unity-bridge/)
-[![Python 3.8+](https://img.shields.io/pypi/pyversions/claude-unity-bridge)](https://pypi.org/project/claude-unity-bridge/)
-[![CI](https://github.com/ManageXR/claude-unity-bridge/actions/workflows/test-skill.yml/badge.svg)](https://github.com/ManageXR/claude-unity-bridge/actions/workflows/test-skill.yml)
-[![codecov](https://codecov.io/gh/ManageXR/claude-unity-bridge/graph/badge.svg?token=3PHF2GXHON)](https://codecov.io/gh/ManageXR/claude-unity-bridge)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/ManageXR/claude-unity-bridge/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/harness-unity-bridge)](https://pypi.org/project/harness-unity-bridge/)
+[![Python 3.8+](https://img.shields.io/pypi/pyversions/harness-unity-bridge)](https://pypi.org/project/harness-unity-bridge/)
+[![CI](https://github.com/WarrenMondeville/harness-unity-bridge/actions/workflows/test-skill.yml/badge.svg)](https://github.com/WarrenMondeville/harness-unity-bridge/actions/workflows/test-skill.yml)
+[![codecov](https://codecov.io/gh/WarrenMondeville/harness-unity-bridge/graph/badge.svg?token=3PHF2GXHON)](https://codecov.io/gh/WarrenMondeville/harness-unity-bridge)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/LICENSE)
 [![Unity 2021.3+](https://img.shields.io/badge/Unity-2021.3%2B-black.svg)](https://unity.com/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/claude-unity-bridge)](https://pypi.org/project/claude-unity-bridge/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/harness-unity-bridge)](https://pypi.org/project/harness-unity-bridge/)
 
-> File-based bridge enabling [Claude Code](https://docs.anthropic.com/en/docs/claude-code) to control Unity Editor operations in a running editor instance.
+> File-based bridge enabling DeepSeek Harness to control Unity Editor operations in a running editor instance.
 
-## Why Claude Unity Bridge?
+## Why Harness Unity Bridge?
 
 - **Zero config** — No network setup, no port conflicts. Just install and go.
-- **Deterministic CLI** — Tested Python script handles UUIDs, polling, retries, and cleanup so Claude doesn't have to.
-- **Multi-project** — Each Unity project gets its own `.unity-bridge/` directory. Work on multiple projects simultaneously.
+- **Deterministic CLI** — Tested Python script handles UUIDs, polling, retries, and cleanup so DeepSeek Harness doesn't have to.
+- **Multi-project** — Each Unity project gets its own `.harness-unity-bridge/` directory. Work on multiple projects simultaneously.
 - **Full editor control** — Run tests, compile, check logs, refresh assets, build, and control Play Mode.
 - **Cross-platform** — macOS, Linux, and Windows support.
 
@@ -23,18 +23,18 @@
 **Install the CLI:**
 
 ```bash
-pip install claude-unity-bridge
-unity-bridge install-skill
+pip install harness-unity-bridge
+harness-unity-bridge install-skill
 ```
 
 Or use the one-line installer:
 
 ```bash
 # macOS / Linux / Git Bash
-curl -sSL https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.sh | bash
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/WarrenMondeville/harness-unity-bridge/main/install.ps1 | iex
 ```
 
 **Add the Unity package** (in Unity Editor):
@@ -42,12 +42,12 @@ irm https://raw.githubusercontent.com/ManageXR/claude-unity-bridge/main/install.
 `Window > Package Manager > + > Add package from git URL...`
 
 ```
-https://github.com/ManageXR/claude-unity-bridge.git?path=package
+https://github.com/WarrenMondeville/harness-unity-bridge.git?path=package
 ```
 
 ## Quick Start
 
-Open Claude Code in your Unity project directory and ask naturally:
+Open DeepSeek Harness in your Unity project directory and ask naturally:
 
 ```
 "Run the Unity tests"
@@ -59,11 +59,11 @@ Open Claude Code in your Unity project directory and ask naturally:
 Or use the CLI directly:
 
 ```bash
-unity-bridge run-tests --mode EditMode
-unity-bridge compile
-unity-bridge get-console-logs --limit 10
-unity-bridge get-status
-unity-bridge build --target Android
+harness-unity-bridge run-tests --mode EditMode
+harness-unity-bridge compile
+harness-unity-bridge get-console-logs --limit 10
+harness-unity-bridge get-status
+harness-unity-bridge build --target Android
 ```
 
 ## Commands
@@ -81,14 +81,14 @@ unity-bridge build --target Android
 ## How It Works
 
 ```
-Claude Code  -->  unity-bridge CLI  -->  .unity-bridge/command.json
+DeepSeek Harness  -->  harness-unity-bridge CLI  -->  .harness-unity-bridge/command.json
                                                   |
                                             Unity Editor
                                                   |
-Claude Code  <--  unity-bridge CLI  <--  .unity-bridge/response-{id}.json
+DeepSeek Harness  <--  harness-unity-bridge CLI  <--  .harness-unity-bridge/response-{id}.json
 ```
 
-1. Claude Code (or you) runs a `unity-bridge` command
+1. DeepSeek Harness (or you) runs a `harness-unity-bridge` command
 2. The CLI writes a JSON command with a unique UUID
 3. Unity Editor polls for and executes the command
 4. The CLI polls for the response with exponential backoff
@@ -99,16 +99,16 @@ All file I/O is atomic (temp file + rename) to prevent corruption. The CLI handl
 ## Updating
 
 ```bash
-unity-bridge update
+harness-unity-bridge update
 ```
 
 ## Documentation
 
-- [Installation Options](https://github.com/ManageXR/claude-unity-bridge/blob/main/docs/INSTALLATION.md) — Alternative installation methods
-- [Usage Guide](https://github.com/ManageXR/claude-unity-bridge/blob/main/docs/USAGE.md) — Command formats and response details
-- [Architecture](https://github.com/ManageXR/claude-unity-bridge/blob/main/docs/ARCHITECTURE.md) — Project structure and design
-- [Command Reference](https://github.com/ManageXR/claude-unity-bridge/blob/main/skill/references/COMMANDS.md) — Complete command specification
+- [Installation Options](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/docs/INSTALLATION.md) — Alternative installation methods
+- [Usage Guide](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/docs/USAGE.md) — Command formats and response details
+- [Architecture](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/docs/ARCHITECTURE.md) — Project structure and design
+- [Command Reference](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/skill/references/COMMANDS.md) — Complete command specification
 
 ## License
 
-[Apache 2.0](https://github.com/ManageXR/claude-unity-bridge/blob/main/LICENSE)
+[Apache 2.0](https://github.com/WarrenMondeville/harness-unity-bridge/blob/main/LICENSE)

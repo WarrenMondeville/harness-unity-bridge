@@ -1,5 +1,5 @@
-using MXR.ClaudeBridge.Commands;
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Commands;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using UnityEditor.TestTools.TestRunner.Api;
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using TestStatus = UnityEditor.TestTools.TestRunner.Api.TestStatus;
 using RunState = UnityEditor.TestTools.TestRunner.Api.RunState;
 
-namespace MXR.ClaudeBridge.Tests.Commands {
+namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
     /// Tests for RunTestsCommand.
     /// Focus: Tests REAL behavior (test mode parsing, callback tracking, progress reporting)

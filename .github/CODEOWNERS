@@ -1,12 +1,11 @@
 # Default owners for everything
-* @ManageXR/unity-external
+* @WarrenMondeville
 
 # Unity package code
-/Editor/ @ManageXR/unity-external
-/Tests/ @ManageXR/unity-external
+/package/ @WarrenMondeville
 
 # Python skill
-/skill/ @ManageXR/unity-external
+/skill/ @WarrenMondeville
 
 # CI/CD
-/.github/ @ManageXR/unity-external
+/.github/ @WarrenMondeville

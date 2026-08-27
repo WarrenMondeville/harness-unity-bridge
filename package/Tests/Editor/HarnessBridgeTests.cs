@@ -1,17 +1,17 @@
-using MXR.ClaudeBridge.Models;
+using DeepSeekAI.HarnessBridge.Models;
 using NUnit.Framework;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-namespace MXR.ClaudeBridge.Tests {
+namespace DeepSeekAI.HarnessBridge.Tests {
     /// <summary>
-    /// Tests for ClaudeBridge dispatcher and validation logic.
+    /// Tests for HarnessBridge dispatcher and validation logic.
     /// Focus: Tests response ID validation, response factory methods, and error handling patterns.
     /// NOT testing: File I/O operations (require integration tests), Unity Editor static state.
     /// </summary>
     [TestFixture]
-    public class ClaudeBridgeTests {
-        // Mirror the regex pattern from ClaudeBridge for testing
+    public class HarnessBridgeTests {
+        // Mirror the regex pattern from HarnessBridge for testing
         private static readonly Regex ValidIdPattern = new Regex(@"^[a-fA-F0-9\-]+$", RegexOptions.Compiled);
 
         #region Response ID Validation Tests

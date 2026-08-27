@@ -3,16 +3,17 @@ requires = ["setuptools>=82.0.1,<83", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-unity-bridge"
+name = "harness-unity-bridge"
 version = "0.3.0"
-description = "Control Unity Editor from Claude Code — run tests, compile, get logs, build, and more via a file-based bridge"
+description = "Control Unity Editor from DeepSeek Harness — run tests, compile, get logs, build, and more via a file-based bridge"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
 keywords = [
     "unity",
-    "claude",
-    "claude-code",
+    "deepseek",
+    "deepseek-harness",
+    "harness",
     "game-development",
     "unity-editor",
     "automation",
@@ -38,14 +39,14 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ManageXR/claude-unity-bridge"
-Repository = "https://github.com/ManageXR/claude-unity-bridge"
-Issues = "https://github.com/ManageXR/claude-unity-bridge/issues"
-Changelog = "https://github.com/ManageXR/claude-unity-bridge/releases"
-PyPI = "https://pypi.org/project/claude-unity-bridge/"
+Homepage = "https://github.com/WarrenMondeville/harness-unity-bridge"
+Repository = "https://github.com/WarrenMondeville/harness-unity-bridge"
+Issues = "https://github.com/WarrenMondeville/harness-unity-bridge/issues"
+Changelog = "https://github.com/WarrenMondeville/harness-unity-bridge/releases"
+PyPI = "https://pypi.org/project/harness-unity-bridge/"
 
 [project.scripts]
-unity-bridge = "claude_unity_bridge.cli:main"
+harness-unity-bridge = "harness_unity_bridge.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-cov>=4.0", "black>=23.0", "flake8>=6.0"]
@@ -57,4 +58,4 @@ where = ["src"]
 pythonpath = ["src"]
 
 [tool.setuptools.package-data]
-claude_unity_bridge = ["skill/*.md", "skill/references/*.md"]
+harness_unity_bridge = ["skill/*.md", "skill/references/*.md"]

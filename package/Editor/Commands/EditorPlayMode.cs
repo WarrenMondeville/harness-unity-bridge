@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace MXR.ClaudeBridge.Commands {
+namespace DeepSeekAI.HarnessBridge.Commands {
     public class EditorPlayMode : IEditorPlayMode {
         public bool IsPlaying {
             get => EditorApplication.isPlaying;

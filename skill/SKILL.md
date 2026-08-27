@@ -1,15 +1,22 @@
 ---
-name: unity
-description: Execute Unity Editor commands (run tests, compile, get logs, refresh assets, play/pause/step) via file-based bridge. Auto-activates for Unity-related tasks. Requires com.mxr.claude-bridge package installed in Unity project.
+name: unity-bridge
+description: >-
+  Control the Unity Editor from DeepSeek Harness — run EditMode/PlayMode tests, compile scripts,
+  refresh assets, read console logs, check editor status, control Play Mode, and build — through
+  the harness-unity-bridge file-based protocol.
+whenToUse: >-
+  Use when working on or asking about a Unity project: running tests, checking compilation or
+  console errors, refreshing assets, entering Play Mode, or building. Requires the
+  com.deepseekai.harness-unity-bridge package installed in the Unity project.
 ---
 
 # Unity Bridge Skill
 
-Control Unity Editor operations from Claude Code using a reliable file-based communication protocol.
+Control Unity Editor operations from DeepSeek Harness using a reliable file-based communication protocol.
 
 ## Overview
 
-The Unity Bridge enables Claude Code to trigger operations in a running Unity Editor instance without network configuration or port conflicts. It uses a simple file-based protocol where commands are written to `.unity-bridge/command.json` and responses are read from `.unity-bridge/response-{id}.json`.
+The Unity Bridge enables DeepSeek Harness to trigger operations in a running Unity Editor instance without network configuration or port conflicts. It uses a simple file-based protocol where commands are written to `.harness-unity-bridge/command.json` and responses are read from `.harness-unity-bridge/response-{id}.json`.
 
 **Key Features:**
 - Execute EditMode and PlayMode tests
@@ -20,12 +27,12 @@ The Unity Bridge enables Claude Code to trigger operations in a running Unity Ed
 - Control Play Mode (play, pause, step)
 - Build projects (direct or custom pipeline)
 
-**Multi-Project Support:** Each Unity project has its own `.unity-bridge/` directory, allowing multiple projects to be worked on simultaneously.
+**Multi-Project Support:** Each Unity project has its own `.harness-unity-bridge/` directory, allowing multiple projects to be worked on simultaneously.
 
 ## Requirements
 
-1. **Unity Package:** Install `com.mxr.claude-bridge` in your Unity project
-   - Via Package Manager: `https://github.com/ManageXR/claude-unity-bridge.git?path=package`
+1. **Unity Package:** Install `com.deepseekai.harness-unity-bridge` in your Unity project
+   - Via Package Manager: `https://github.com/WarrenMondeville/harness-unity-bridge.git?path=package`
    - See main package README for installation instructions
 
 2. **Unity Editor:** Must be open with your project loaded
@@ -34,7 +41,7 @@ The Unity Bridge enables Claude Code to trigger operations in a running Unity Ed
 
 ## How It Works
 
-The skill uses a CLI tool (`unity-bridge`) that handles:
+The skill uses a CLI tool (`harness-unity-bridge`) that handles:
 - UUID generation for command tracking
 - Atomic file writes to prevent corruption
 - Exponential backoff polling for responses
@@ -42,7 +49,7 @@ The skill uses a CLI tool (`unity-bridge`) that handles:
 - Automatic cleanup of old response files
 - Formatted, human-readable output
 
-This approach ensures **deterministic, rock-solid execution** - the script is tested once and behaves identically every time, handling all edge cases (timeouts, file locking, malformed responses, etc.) without requiring Claude to manage these details in-context.
+This approach ensures **deterministic, rock-solid execution** - the script is tested once and behaves identically every time, handling all edge cases (timeouts, file locking, malformed responses, etc.) without requiring DeepSeek Harness to manage these details in-context.
 
 ## Usage
 
@@ -51,7 +58,7 @@ This approach ensures **deterministic, rock-solid execution** - the script is te
 When you need to interact with Unity, use the CLI directly:
 
 ```bash
-unity-bridge [command] [options]
+harness-unity-bridge [command] [options]
 ```
 
 All commands automatically:
@@ -69,13 +76,13 @@ Execute Unity tests in EditMode or PlayMode:
 
 ```bash
 # Run all EditMode tests
-unity-bridge run-tests --mode EditMode
+harness-unity-bridge run-tests --mode EditMode
 
 # Run tests with filter
-unity-bridge run-tests --mode EditMode --filter "MXR.Tests"
+harness-unity-bridge run-tests --mode EditMode --filter "DeepSeekAI.Tests"
 
 # Run all tests (both modes)
-unity-bridge run-tests
+harness-unity-bridge run-tests
 ```
 
 **Output:**
@@ -86,9 +93,9 @@ unity-bridge run-tests
 Duration: 1.25s
 
 Failed Tests:
-  - MXR.Tests.AuthTests.LoginWithInvalidCredentials
+  - DeepSeekAI.Tests.AuthTests.LoginWithInvalidCredentials
     Expected: success, Actual: failure
-  - MXR.Tests.NetworkTests.TimeoutHandling
+  - DeepSeekAI.Tests.NetworkTests.TimeoutHandling
     NullReferenceException: Object reference not set
 ```
 
@@ -102,7 +109,7 @@ Failed Tests:
 Trigger Unity script compilation:
 
 ```bash
-unity-bridge compile
+harness-unity-bridge compile
 ```
 
 **Output (Success):**
@@ -125,13 +132,13 @@ Retrieve Unity console output:
 
 ```bash
 # Get last 20 logs
-unity-bridge get-console-logs --limit 20
+harness-unity-bridge get-console-logs --limit 20
 
 # Get only errors
-unity-bridge get-console-logs --limit 10 --filter Error
+harness-unity-bridge get-console-logs --limit 10 --filter Error
 
 # Get warnings
-unity-bridge get-console-logs --filter Warning
+harness-unity-bridge get-console-logs --filter Warning
 ```
 
 **Output:**
@@ -156,7 +163,7 @@ Console Logs (last 10, filtered by Error):
 Check Unity Editor state:
 
 ```bash
-unity-bridge get-status
+harness-unity-bridge get-status
 ```
 
 **Output:**
@@ -177,7 +184,7 @@ Unity Editor Status:
 Force Unity to refresh assets:
 
 ```bash
-unity-bridge refresh
+harness-unity-bridge refresh
 ```
 
 **Output:**
@@ -192,13 +199,13 @@ Toggle Play Mode, pause, and step through frames:
 
 ```bash
 # Enter/exit Play Mode (toggle)
-unity-bridge play
+harness-unity-bridge play
 
 # Pause/unpause (while in Play Mode)
-unity-bridge pause
+harness-unity-bridge pause
 
 # Step one frame (while in Play Mode)
-unity-bridge step
+harness-unity-bridge step
 ```
 
 **Output (play):**
@@ -233,19 +240,19 @@ Build the Unity project using either direct `BuildPipeline.BuildPlayer()` or a c
 
 ```bash
 # Direct build with current active target
-unity-bridge build
+harness-unity-bridge build
 
 # Direct build for specific target
-unity-bridge build --target Android --development
+harness-unity-bridge build --target Android --development
 
 # Custom build pipeline via static method invocation
-unity-bridge build --method MXR.Builder.BuildEntryPoints.BuildQuest
+harness-unity-bridge build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest
 
 # With environment variables
-unity-bridge build --method MXR.Builder.BuildEntryPoints.BuildQuest --env BUILD_TYPE=production --env SCRIPTING_BACKEND=il2cpp
+harness-unity-bridge build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest --env BUILD_TYPE=production --env SCRIPTING_BACKEND=il2cpp
 
-# Using a named build profile (from .unity-bridge/build.json)
-unity-bridge build --profile quest
+# Using a named build profile (from .harness-unity-bridge/build.json)
+harness-unity-bridge build --profile quest
 ```
 
 **Output (Success):**
@@ -271,28 +278,28 @@ Build Failed: 5 error(s), 2 warning(s)
 ```
 
 **Parameters:**
-- `--method` - Fully qualified static method (e.g., `MXR.Builder.BuildEntryPoints.BuildQuest`)
+- `--method` - Fully qualified static method (e.g., `DeepSeekAI.Builder.BuildEntryPoints.BuildQuest`)
 - `--target` - BuildTarget enum name (e.g., `Android`, `StandaloneWindows64`, `iOS`)
 - `--development` - Enable development build flag
 - `--env` - Environment variable `KEY=VALUE` (repeatable)
-- `--profile` - Named profile from `.unity-bridge/build.json`
+- `--profile` - Named profile from `.harness-unity-bridge/build.json`
 - `--output` - Override output path
 - `--timeout` - Override default 300s timeout
 
 **Build Profiles:**
 
-For projects with custom build pipelines, create `.unity-bridge/build.json` to define named profiles:
+For projects with custom build pipelines, create `.harness-unity-bridge/build.json` to define named profiles:
 
 ```json
 {
   "profiles": {
     "quest": {
-      "method": "MXR.Builder.BuildEntryPoints.BuildQuest",
+      "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
       "env": { "BUILD_TYPE": "development", "SCRIPTING_BACKEND": "il2cpp" },
       "timeout": 600
     },
     "pico": {
-      "method": "MXR.Builder.BuildEntryPoints.BuildPico"
+      "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildPico"
     }
   }
 }
@@ -311,7 +318,7 @@ For projects with custom build pipelines, create `.unity-bridge/build.json` to d
 Override the default 30-second timeout:
 
 ```bash
-unity-bridge run-tests --timeout 60
+harness-unity-bridge run-tests --timeout 60
 ```
 
 Use longer timeouts for:
@@ -324,7 +331,7 @@ Use longer timeouts for:
 Automatically remove old response files before executing:
 
 ```bash
-unity-bridge compile --cleanup
+harness-unity-bridge compile --cleanup
 ```
 
 This removes response files older than 1 hour. Useful for maintaining a clean workspace.
@@ -334,7 +341,7 @@ This removes response files older than 1 hour. Useful for maintaining a clean wo
 See detailed execution progress:
 
 ```bash
-unity-bridge run-tests --verbose
+harness-unity-bridge run-tests --verbose
 ```
 
 Prints:
@@ -367,9 +374,9 @@ Error: Failed to write command file: Invalid mode 'InvalidMode'
 - `1` - Error (Unity not running, invalid params, etc.)
 - `2` - Timeout
 
-## Integration with Claude Code
+## Integration with DeepSeek Harness
 
-When you're working in a Unity project directory, you can ask Claude Code to perform Unity operations naturally:
+When you're working in a Unity project directory, you can ask DeepSeek Harness to perform Unity operations naturally:
 
 - "Run the Unity tests in EditMode"
 - "Check if there are any compilation errors"
@@ -382,13 +389,13 @@ When you're working in a Unity project directory, you can ask Claude Code to per
 - "Run the Quest build"
 - "Set up build profiles for my project"
 
-Claude Code will automatically use this skill to execute the commands via the Python script.
+DeepSeek Harness will automatically use this skill to execute the commands via the Python script.
 
 ## File Protocol Details
 
 ### Command Format
 
-Written to `.unity-bridge/command.json`:
+Written to `.harness-unity-bridge/command.json`:
 
 ```json
 {
@@ -403,7 +410,7 @@ Written to `.unity-bridge/command.json`:
 
 ### Response Format
 
-Read from `.unity-bridge/response-{id}.json`:
+Read from `.harness-unity-bridge/response-{id}.json`:
 
 ```json
 {
@@ -433,7 +440,7 @@ skill/
 ├── SKILL.md                    # This file
 ├── pyproject.toml              # Package configuration
 ├── src/
-│   └── claude_unity_bridge/
+│   └── harness_unity_bridge/
 │       ├── __init__.py         # Package version
 │       └── cli.py              # CLI implementation
 ├── tests/
@@ -459,16 +466,16 @@ For more information, see:
 **Solutions:**
 1. Ensure Unity Editor is open with the project loaded
 2. Check that the package is installed (`Window > Package Manager`)
-3. Verify `.unity-bridge/` directory exists in project root
-4. Check Unity Console for errors from ClaudeBridge package
+3. Verify `.harness-unity-bridge/` directory exists in project root
+4. Check Unity Console for errors from HarnessBridge package
 
 ### Response File Issues
 
 **Symptoms:** "Failed to parse response JSON" error
 
 **Solutions:**
-1. Check Unity Console for ClaudeBridge errors
-2. Manually inspect `.unity-bridge/response-*.json` files
+1. Check Unity Console for HarnessBridge errors
+2. Manually inspect `.harness-unity-bridge/response-*.json` files
 3. Try cleaning up old responses with `--cleanup` flag
 4. Restart Unity Editor if file system is in bad state
 
@@ -489,29 +496,29 @@ For more information, see:
 **Solutions:**
 1. The CLI handles file locking automatically with retries
 2. If persistent, check for antivirus interference
-3. Verify file permissions on `.unity-bridge/` directory
+3. Verify file permissions on `.harness-unity-bridge/` directory
 
 ## Installation
 
 ### Quick Install
 
 ```bash
-pip install claude-unity-bridge
-unity-bridge install-skill
+pip install harness-unity-bridge
+harness-unity-bridge install-skill
 ```
 
-This installs the CLI and the Claude Code skill.
+This installs the CLI and the DeepSeek Harness skill.
 
 ### Verify Setup
 
 ```bash
-unity-bridge health-check
+harness-unity-bridge health-check
 ```
 
 ### Updating
 
 ```bash
-unity-bridge update
+harness-unity-bridge update
 ```
 
 This upgrades the pip package and reinstalls the skill.
@@ -519,23 +526,23 @@ This upgrades the pip package and reinstalls the skill.
 ### Uninstalling
 
 ```bash
-unity-bridge uninstall-skill
-pip uninstall claude-unity-bridge
+harness-unity-bridge uninstall-skill
+pip uninstall harness-unity-bridge
 ```
 
 ### Development Installation
 
 ```bash
-cd claude-unity-bridge/skill
+cd harness-unity-bridge/skill
 pip install -e ".[dev]"
-unity-bridge install-skill
+harness-unity-bridge install-skill
 ```
 
 ## Why a CLI Tool?
 
-The skill uses a CLI tool instead of implementing the protocol directly in Claude Code prompts for several critical reasons:
+The skill uses a CLI tool instead of implementing the protocol directly in DeepSeek Harness prompts for several critical reasons:
 
-**Consistency:** UUID generation, polling logic, and error handling work identically every time. Without the CLI, Claude might implement these differently across sessions, leading to subtle bugs.
+**Consistency:** UUID generation, polling logic, and error handling work identically every time. Without the CLI, DeepSeek Harness might implement these differently across sessions, leading to subtle bugs.
 
 **Reliability:** All edge cases are handled once in tested code:
 - File locking when Unity writes responses
@@ -544,16 +551,16 @@ The skill uses a CLI tool instead of implementing the protocol directly in Claud
 - Graceful handling of malformed JSON
 - Proper cleanup of stale files
 
-**Error Messages:** Clear, actionable error messages for all failure modes. Claude doesn't have to figure out what went wrong each time.
+**Error Messages:** Clear, actionable error messages for all failure modes. DeepSeek Harness doesn't have to figure out what went wrong each time.
 
-**Token Efficiency:** The CLI handles complexity, so Claude doesn't need to manage low-level details in-context. The SKILL.md stays concise while providing full functionality.
+**Token Efficiency:** The CLI handles complexity, so DeepSeek Harness doesn't need to manage low-level details in-context. The SKILL.md stays concise while providing full functionality.
 
 **Deterministic Exit Codes:** Shell integration works reliably with standard exit codes (0=success, 1=error, 2=timeout).
 
-**Rock Solid:** Test the CLI once, it works forever. No variability between Claude sessions.
+**Rock Solid:** Test the CLI once, it works forever. No variability between DeepSeek Harness sessions.
 
 ## Support
 
 For issues or questions:
-- Package Issues: https://github.com/ManageXR/claude-unity-bridge/issues
+- Package Issues: https://github.com/WarrenMondeville/harness-unity-bridge/issues
 - Skill Issues: Report in the same repository with `[Skill]` prefix
