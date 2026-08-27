@@ -1,32 +1,29 @@
-using Moq;
 using DeepSeekAI.HarnessBridge.Commands;
 using DeepSeekAI.HarnessBridge.Models;
+using DeepSeekAI.HarnessBridge.Tests.TestHelpers;
 using NUnit.Framework;
 
 namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
-    /// Tests for StepCommand using Moq to mock IEditorPlayMode.
+    /// Tests for StepCommand using a hand-written FakeEditorPlayMode (no Moq dependency).
     /// Focus: Precondition check (must be playing), Step() call verification, response construction.
     /// </summary>
     [TestFixture]
     public class StepCommandTests : CommandTestFixture {
-        private Mock<IEditorPlayMode> _mockEditor;
+        private FakeEditorPlayMode _editor;
         private StepCommand _command;
 
         [SetUp]
         public override void SetUp() {
             base.SetUp();
-            _mockEditor = new Mock<IEditorPlayMode>();
-            _mockEditor.SetupAllProperties();
-            _mockEditor.SetupGet(m => m.IsCompiling).Returns(false);
-            _mockEditor.SetupGet(m => m.IsUpdating).Returns(false);
-            _command = new StepCommand(_mockEditor.Object);
+            _editor = new FakeEditorPlayMode();
+            _command = new StepCommand(_editor);
             Request.action = "step";
         }
 
         [Test]
         public void Execute_WhenNotPlaying_ReturnsError() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(false);
+            _editor.SetInitialState(false, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -37,7 +34,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenNotPlaying_ErrorMentionsPlayCommand() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(false);
+            _editor.SetInitialState(false, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -46,16 +43,16 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenNotPlaying_DoesNotCallStep() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(false);
+            _editor.SetInitialState(false, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
-            _mockEditor.Verify(m => m.Step(), Times.Never());
+            Assert.That(_editor.StepCallCount, Is.EqualTo(0));
         }
 
         [Test]
         public void Execute_CallsOnCompleteExactlyOnce() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
             var callCount = 0;
             System.Action<CommandResponse> countingCallback = (response) => { callCount++; };
 
@@ -66,7 +63,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_DoesNotCallOnProgress() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -75,7 +72,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_ConstructsResponseWithCorrectIdAndAction() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -85,7 +82,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenPlaying_ReturnsSuccess() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -94,16 +91,16 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenPlaying_CallsStep() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
-            _mockEditor.Verify(m => m.Step(), Times.Once());
+            Assert.That(_editor.StepCallCount, Is.EqualTo(1));
         }
 
         [Test]
         public void Execute_WhenPlaying_IncludesEditorStatus() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -112,8 +109,8 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_EditorStatusReflectsCompiling() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
-            _mockEditor.SetupGet(m => m.IsCompiling).Returns(true);
+            _editor.SetInitialState(true, false);
+            _editor.IsCompiling = true;
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -122,7 +119,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_ResponseHasDuration() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 

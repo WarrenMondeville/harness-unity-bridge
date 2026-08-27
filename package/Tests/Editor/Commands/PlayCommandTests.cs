@@ -1,26 +1,23 @@
-using Moq;
 using DeepSeekAI.HarnessBridge.Commands;
 using DeepSeekAI.HarnessBridge.Models;
+using DeepSeekAI.HarnessBridge.Tests.TestHelpers;
 using NUnit.Framework;
 
 namespace DeepSeekAI.HarnessBridge.Tests.Commands {
     /// <summary>
-    /// Tests for PlayCommand using Moq to mock IEditorPlayMode.
-    /// Focus: Toggle behavior, response construction, editorStatus reflects mock state.
+    /// Tests for PlayCommand using a hand-written FakeEditorPlayMode (no Moq dependency).
+    /// Focus: Toggle behavior, response construction, editorStatus reflects fake state.
     /// </summary>
     [TestFixture]
     public class PlayCommandTests : CommandTestFixture {
-        private Mock<IEditorPlayMode> _mockEditor;
+        private FakeEditorPlayMode _editor;
         private PlayCommand _command;
 
         [SetUp]
         public override void SetUp() {
             base.SetUp();
-            _mockEditor = new Mock<IEditorPlayMode>();
-            _mockEditor.SetupAllProperties();
-            _mockEditor.SetupGet(m => m.IsCompiling).Returns(false);
-            _mockEditor.SetupGet(m => m.IsUpdating).Returns(false);
-            _command = new PlayCommand(_mockEditor.Object);
+            _editor = new FakeEditorPlayMode();
+            _command = new PlayCommand(_editor);
             Request.action = "play";
         }
 
@@ -83,25 +80,27 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenNotPlaying_TogglesIsPlayingToTrue() {
-            _mockEditor.SetupProperty(m => m.IsPlaying, false);
+            _editor.SetInitialState(false, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
-            _mockEditor.VerifySet(m => m.IsPlaying = true, Times.Once());
+            Assert.That(_editor.IsPlayingWrites, Has.Count.EqualTo(1));
+            Assert.That(_editor.IsPlayingWrites[0], Is.True);
         }
 
         [Test]
         public void Execute_WhenPlaying_TogglesIsPlayingToFalse() {
-            _mockEditor.SetupProperty(m => m.IsPlaying, true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
-            _mockEditor.VerifySet(m => m.IsPlaying = false, Times.Once());
+            Assert.That(_editor.IsPlayingWrites, Has.Count.EqualTo(1));
+            Assert.That(_editor.IsPlayingWrites[0], Is.False);
         }
 
         [Test]
         public void Execute_EditorStatusReflectsCompiling() {
-            _mockEditor.SetupGet(m => m.IsCompiling).Returns(true);
+            _editor.IsCompiling = true;
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -110,7 +109,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_EditorStatusReflectsUpdating() {
-            _mockEditor.SetupGet(m => m.IsUpdating).Returns(true);
+            _editor.IsUpdating = true;
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -119,7 +118,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenEnteringPlayMode_EditorStatusShowsPlaying() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(false);
+            _editor.SetInitialState(false, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
@@ -129,7 +128,7 @@ namespace DeepSeekAI.HarnessBridge.Tests.Commands {
 
         [Test]
         public void Execute_WhenExitingPlayMode_EditorStatusShowsStopped() {
-            _mockEditor.SetupGet(m => m.IsPlaying).Returns(true);
+            _editor.SetInitialState(true, false);
 
             _command.Execute(Request, Responses.OnProgress, Responses.OnComplete);
 
