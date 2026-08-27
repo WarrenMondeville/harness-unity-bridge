@@ -101,7 +101,8 @@ def check_gitignore_and_notify():
             pass  # If we can't read gitignore, show the notice
 
     print(
-        "\nNote: Add '.harness-unity-bridge/' to your .gitignore to avoid committing runtime files.\n",
+        "\nNote: Add '.harness-unity-bridge/' to your .gitignore "
+        "to avoid committing runtime files.\n",
         file=sys.stderr,
     )
 

@@ -461,7 +461,10 @@ class TestLoadBuildConfig:
         result = load_build_config(tmp_path / ".harness-unity-bridge")
         assert result is not None
         assert "quest" in result["profiles"]
-        assert result["profiles"]["quest"]["method"] == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
+        assert (
+            result["profiles"]["quest"]["method"]
+            == "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
+        )
         assert result["default"] == "quest"
 
     def test_load_missing_config_returns_none(self, tmp_path):
@@ -1539,7 +1542,9 @@ class TestMainFunction:
 
     def test_main_verbose_unexpected_error(self, tmp_path, capsys):
         with patch("harness_unity_bridge.cli.UNITY_DIR", tmp_path):
-            with patch("sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1", "--verbose"]):
+            with patch(
+                "sys.argv", ["harness-unity-bridge", "compile", "--timeout", "1", "--verbose"]
+            ):
                 with patch(
                     "harness_unity_bridge.cli.execute_command",
                     side_effect=RuntimeError("Unexpected"),
