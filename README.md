@@ -1,4 +1,4 @@
-# 🌉 Claude Unity Bridge
+#  Harness Unity Bridge
 
 ![Unity 2021.3+](https://img.shields.io/badge/Unity-2021.3%2B-black.svg)
 ![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)
