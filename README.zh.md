@@ -22,6 +22,7 @@
 - **获取控制台日志** — 拉取 Unity Console 输出
 - **Play Mode 控制** — 播放、暂停、单帧步进
 - **构建项目** — 直接构建或调用自定义构建方法
+- **资源依赖分析** — 依赖追踪、引用查找、未使用资源检测、依赖路径追踪、资源搜索、资源信息
 
 ## 🚀 快速开始
 
@@ -75,6 +76,12 @@ harness-unity-bridge get-status                    # 查看编辑器状态
 harness-unity-bridge refresh                       # 刷新资源数据库
 harness-unity-bridge play / pause / step           # 控制 Play Mode
 harness-unity-bridge build --target Android        # 构建项目
+harness-unity-bridge get-dependencies --asset Assets/Foo.prefab --recursive   # 正向依赖
+harness-unity-bridge find-references --asset Assets/Foo.mat                    # 反向引用
+harness-unity-bridge find-unused-assets                                       # 未使用资源
+harness-unity-bridge trace-path --from Assets/A.prefab --to Assets/D.fbx      # 依赖路径
+harness-unity-bridge search-assets --query "Player" --type Prefab             # 搜索资源
+harness-unity-bridge get-asset-info --asset Assets/Foo.prefab                 # 资源信息
 harness-unity-bridge health-check                  # 检查桥接环境是否就绪
 ```
 

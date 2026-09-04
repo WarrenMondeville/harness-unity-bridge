@@ -1,8 +1,8 @@
 {
   "name": "com.deepseekai.harness-unity-bridge",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "displayName": "DeepSeek Harness Unity Bridge",
-  "description": "File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations (tests, compile, refresh) in a running editor instance.",
+  "description": "File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations (tests, compile, refresh, build, asset dependency analysis) in a running editor instance.",
   "unity": "2021.3",
   "documentationUrl": "https://github.com/WarrenMondeville/harness-unity-bridge",
   "dependencies": {},

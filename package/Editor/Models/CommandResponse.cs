@@ -16,6 +16,14 @@ namespace DeepSeekAI.HarnessBridge.Models {
         public EditorStatus editorStatus;
         public BuildInfo buildInfo;
 
+        // Asset dependency analysis results
+        public AssetDependencyResult assetDependencies;
+        public AssetReferencesResult assetReferences;
+        public UnusedAssetsResult unusedAssets;
+        public TracePathResult tracePath;
+        public AssetSearchResult searchResult;
+        public AssetInfo assetInfo;
+
         public static CommandResponse Running(string id, string action) {
             return new CommandResponse {
                 id = id,
@@ -100,5 +108,54 @@ namespace DeepSeekAI.HarnessBridge.Models {
         public string outputPath;
         public long sizeBytes;         // Total build size
         public string method;          // "direct" or the invoked method name
+    }
+
+    [Serializable]
+    public class AssetDependencyResult {
+        public string asset;              // The queried asset path
+        public List<string> dependencies; // Paths this asset depends on (sorted, input excluded)
+        public int count;                 // Number of dependencies
+        public bool recursive;            // Whether transitive dependencies were included
+    }
+
+    [Serializable]
+    public class AssetReferencesResult {
+        public string asset;              // The queried asset path
+        public List<string> references;   // Paths that directly reference this asset (sorted)
+        public int count;                 // Number of direct referencers
+    }
+
+    [Serializable]
+    public class UnusedAssetsResult {
+        public List<string> unusedAssets; // Asset paths nothing reachable references (sorted)
+        public int totalAssets;           // Number of candidate assets scanned
+        public int unusedCount;           // Number of unused assets
+        public List<string> roots;        // Roots used for reachability (build scenes + Resources)
+    }
+
+    [Serializable]
+    public class TracePathResult {
+        public string from;               // Start asset path
+        public string to;                 // End asset path
+        public List<string> path;         // Ordered dependency path from -> to (empty if not found)
+        public int depth;                 // Number of edges in the path
+        public bool found;                // Whether a path was found
+    }
+
+    [Serializable]
+    public class AssetSearchResult {
+        public string query;              // The search query used
+        public List<string> results;      // Matching asset paths (sorted, capped at limit)
+        public int count;                 // Number of results returned
+    }
+
+    [Serializable]
+    public class AssetInfo {
+        public string path;               // Asset path
+        public string guid;               // Asset GUID
+        public string type;               // Main asset C# type full name
+        public long sizeBytes;            // On-disk file size
+        public int directDependencyCount; // Direct dependencies only
+        public int dependencyCount;       // Transitive (recursive) dependencies
     }
 }

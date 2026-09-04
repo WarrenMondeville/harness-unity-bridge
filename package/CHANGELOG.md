@@ -5,6 +5,30 @@ All notable changes to the Harness Unity Bridge package will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-18
+
+### Added
+
+- Asset dependency analysis commands (Unity-native, powered by `AssetDatabase`):
+  - `get-dependencies` - list forward dependencies of an asset (`--recursive` for the full closure)
+  - `find-references` - list assets that directly reference an asset (reverse edges, O(N) scan)
+  - `find-unused-assets` - assets unreachable from enabled build scenes + `Resources/` roots
+  - `trace-path` - shortest dependency path between two assets (BFS, `--max-depth` bounded)
+  - `search-assets` - search assets by name and optional type (`--type Prefab`)
+  - `get-asset-info` - GUID, type, size, and dependency counts for one asset
+- New `[Serializable]` response models: `AssetDependencyResult`, `AssetReferencesResult`,
+  `UnusedAssetsResult`, `TracePathResult`, `AssetSearchResult`, `AssetInfo`
+- New `CommandParams` fields for asset queries (`asset`, `from`, `to`, `recursive`,
+  `maxDepth`, `type`, `query`, `includeBuiltin`, `includePackages`)
+- `AssetAnalysisUtil` shared helpers (path/GUID resolution, bool/int string parsing)
+- Python CLI subcommands, arguments, and formatters for all six commands
+- C# command unit tests + Python formatter tests
+
+### Changed
+
+- Asset dependency analysis commands are read-only and remain available while Unity is compiling
+- `find-unused-assets` excludes code assets (`.cs`/`.asmdef`/`.asmref`) — their usage is code-level, not asset-graph-level
+
 ## [0.2.1] - 2026-02-17
 
 ### Added
@@ -153,6 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor-only package (no runtime impact)
 - Automatic initialization via `[InitializeOnLoad]`
 
+[0.4.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.4.0
 [0.2.1]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.1
 [0.2.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.0
 [0.1.5]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.1.5

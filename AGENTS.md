@@ -72,6 +72,12 @@ python3 skill/src/harness_unity_bridge/cli.py compile
 python3 skill/src/harness_unity_bridge/cli.py run-tests --mode EditMode
 python3 skill/src/harness_unity_bridge/cli.py get-console-logs --limit 10 --filter Error
 python3 skill/src/harness_unity_bridge/cli.py refresh
+python3 skill/src/harness_unity_bridge/cli.py get-dependencies --asset Assets/Foo.prefab --recursive
+python3 skill/src/harness_unity_bridge/cli.py find-references --asset Assets/Foo.mat
+python3 skill/src/harness_unity_bridge/cli.py find-unused-assets
+python3 skill/src/harness_unity_bridge/cli.py trace-path --from Assets/A.prefab --to Assets/D.fbx
+python3 skill/src/harness_unity_bridge/cli.py search-assets --query "Player" --type Prefab
+python3 skill/src/harness_unity_bridge/cli.py get-asset-info --asset Assets/Foo.prefab
 ```
 
 ### Git Workflow
@@ -559,6 +565,11 @@ python3 skill/src/harness_unity_bridge/cli.py run-tests --mode EditMode
 
 # Check for errors
 python3 skill/src/harness_unity_bridge/cli.py get-console-logs --filter Error
+
+# Asset dependency analysis
+python3 skill/src/harness_unity_bridge/cli.py get-dependencies --asset Assets/Foo.prefab --recursive
+python3 skill/src/harness_unity_bridge/cli.py find-references --asset Assets/Foo.mat
+python3 skill/src/harness_unity_bridge/cli.py find-unused-assets
 
 # Test Python script
 cd skill && pytest tests/test_cli.py -v

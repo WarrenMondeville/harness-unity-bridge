@@ -25,6 +25,8 @@ File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations i
 - **Get Status** — Check editor compilation/update state
 - **Get Console Logs** — Retrieve Unity console output
 - **Play Mode Control** — Play, pause, and step through frames
+- **Build** — Direct builds or custom build pipelines
+- **Asset Dependency Analysis** — Dependencies, references, unused assets, path tracing, search, and asset info
 
 ## 🚀 Quick Start
 

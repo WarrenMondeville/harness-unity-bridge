@@ -13,7 +13,15 @@ package/                     # Unity package (UPM)
 │   │   ├── CompileCommand.cs    # Script compilation
 │   │   ├── RefreshCommand.cs    # Asset refresh
 │   │   ├── GetStatusCommand.cs  # Editor status
-│   │   └── GetConsoleLogsCommand.cs  # Console logs
+│   │   ├── GetConsoleLogsCommand.cs  # Console logs
+│   │   ├── BuildCommand.cs      # Build (direct or custom method)
+│   │   ├── AssetAnalysisUtil.cs # Shared path/bool/int helpers
+│   │   ├── GetDependenciesCommand.cs  # Forward dependencies
+│   │   ├── FindReferencesCommand.cs   # Reverse references
+│   │   ├── FindUnusedAssetsCommand.cs # Unreachable assets
+│   │   ├── TracePathCommand.cs        # Shortest dependency path (BFS)
+│   │   ├── SearchAssetsCommand.cs     # Asset search
+│   │   └── GetAssetInfoCommand.cs     # Single-asset identity/metrics
 │   └── Models/
 │       ├── CommandRequest.cs    # Request DTO
 │       └── CommandResponse.cs   # Response DTO

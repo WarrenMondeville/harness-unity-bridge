@@ -26,6 +26,7 @@ The Unity Bridge enables DeepSeek Harness to trigger operations in a running Uni
 - Retrieve Unity console logs
 - Control Play Mode (play, pause, step)
 - Build projects (direct or custom pipeline)
+- Asset dependency analysis (dependencies, references, unused assets, path tracing, search, asset info)
 
 **Multi-Project Support:** Each Unity project has its own `.harness-unity-bridge/` directory, allowing multiple projects to be worked on simultaneously.
 
@@ -311,6 +312,47 @@ For projects with custom build pipelines, create `.harness-unity-bridge/build.js
 - Environment variables are set before method invocation and cleaned up after
 - Profile settings are defaults; CLI arguments override them
 
+#### Asset Dependency Analysis
+
+Analyze asset references, find unused assets, and trace dependency paths — powered by Unity's own `AssetDatabase`, so results are always live and exact.
+
+```bash
+# What does this asset depend on? (direct by default, --recursive for the full closure)
+harness-unity-bridge get-dependencies --asset Assets/Prefabs/Player.prefab --recursive
+
+# What references this asset? (impact analysis before changing/deleting it)
+harness-unity-bridge find-references --asset Assets/Materials/Player.mat
+
+# Which assets are unreachable from build scenes + Resources? (unused-asset candidates)
+harness-unity-bridge find-unused-assets
+
+# Is there a dependency chain from A to B? (shortest path via BFS)
+harness-unity-bridge trace-path --from Assets/Scenes/Main.unity --to Assets/Materials/Fx.mat
+
+# Find assets by name/type
+harness-unity-bridge search-assets --query "Player" --type Prefab --limit 20
+
+# Identity + dependency metrics for one asset
+harness-unity-bridge get-asset-info --asset Assets/Prefabs/Player.prefab
+```
+
+**Output (get-dependencies):**
+```
+✓ Dependencies (recursive) for: Assets/Prefabs/Player.prefab
+Count: 14
+Duration: 0.12s
+
+  - Assets/Materials/Player.mat
+  - Assets/Textures/Player_Diffuse.png
+  ...
+```
+
+**Notes:**
+- `asset`/`from`/`to` accept either a project path (`Assets/...`) or a 32-character GUID
+- `find-references` scans all project assets (Unity has no reverse index); add `--include-packages` to also scan `Packages/`
+- `find-unused-assets` treats enabled build scenes and `Resources/` folders as roots; `.cs`/`.asmdef` files are excluded (their usage is code-level, not asset-graph-level)
+- All six commands are read-only and remain available while Unity is compiling
+
 ### Advanced Options
 
 #### Timeout Configuration
@@ -388,6 +430,9 @@ When you're working in a Unity project directory, you can ask DeepSeek Harness t
 - "Build for Android"
 - "Run the Quest build"
 - "Set up build profiles for my project"
+- "What references this material?"
+- "Which assets are unused?"
+- "Find the dependency path between this scene and this material"
 
 DeepSeek Harness will automatically use this skill to execute the commands via the Python script.
 

@@ -21,6 +21,12 @@ from harness_unity_bridge.cli import (
     format_refresh_results,
     format_play_mode_result,
     format_build_results,
+    format_dependencies,
+    format_references,
+    format_unused_assets,
+    format_trace_path,
+    format_search_assets,
+    format_asset_info,
     format_generic_response,
     write_command,
     wait_for_response,
@@ -661,6 +667,208 @@ class TestIntegration:
             # Verify
             assert "Unity Editor Status:" in formatted
             assert "✓ Ready" in formatted
+
+
+class TestFormatDependencies:
+    """Test get-dependencies response formatting"""
+
+    def test_dependencies_success_direct(self):
+        response = {
+            "status": "success",
+            "assetDependencies": {
+                "asset": "Assets/Foo.prefab",
+                "recursive": False,
+                "dependencies": ["Assets/Bar.mat", "Assets/Bar/Tex.png"],
+                "count": 2,
+            },
+        }
+        result = format_dependencies(response, "success", 0.05)
+
+        assert "✓ Dependencies (direct) for: Assets/Foo.prefab" in result
+        assert "Count: 2" in result
+        assert "Assets/Bar.mat" in result
+        assert "Assets/Bar/Tex.png" in result
+
+    def test_dependencies_success_recursive(self):
+        response = {
+            "status": "success",
+            "assetDependencies": {
+                "asset": "Assets/Foo.prefab",
+                "recursive": True,
+                "dependencies": [],
+                "count": 0,
+            },
+        }
+        result = format_dependencies(response, "success", 0.05)
+
+        assert "✓ Dependencies (recursive) for: Assets/Foo.prefab" in result
+        assert "Count: 0" in result
+
+    def test_dependencies_error_falls_back_to_generic(self):
+        response = {
+            "status": "error",
+            "action": "get-dependencies",
+            "error": "Asset not found: Assets/X.asset",
+        }
+        result = format_response(response, "get-dependencies")
+
+        assert "✗ Error: Asset not found: Assets/X.asset" in result
+
+
+class TestFormatReferences:
+    """Test find-references response formatting"""
+
+    def test_references_success(self):
+        response = {
+            "status": "success",
+            "assetReferences": {
+                "asset": "Assets/Foo.mat",
+                "references": ["Assets/Scene1.unity", "Assets/Prefab1.prefab"],
+                "count": 2,
+            },
+        }
+        result = format_references(response, "success", 1.2)
+
+        assert "✓ References to: Assets/Foo.mat" in result
+        assert "Count: 2" in result
+        assert "Assets/Scene1.unity" in result
+        assert "Assets/Prefab1.prefab" in result
+
+    def test_references_empty(self):
+        response = {
+            "status": "success",
+            "assetReferences": {
+                "asset": "Assets/Foo.mat",
+                "references": [],
+                "count": 0,
+            },
+        }
+        result = format_references(response, "success", 1.0)
+
+        assert "Count: 0" in result
+
+
+class TestFormatUnusedAssets:
+    """Test find-unused-assets response formatting"""
+
+    def test_unused_assets_success(self):
+        response = {
+            "status": "success",
+            "unusedAssets": {
+                "unusedAssets": ["Assets/Orphan1.png", "Assets/Orphan2.png"],
+                "totalAssets": 1500,
+                "unusedCount": 2,
+                "roots": ["Assets/Scenes/Main.unity"],
+            },
+        }
+        result = format_unused_assets(response, "success", 5.0)
+
+        assert "✓ Unused Assets: 2 (of 1500 scanned)" in result
+        assert "Roots used: 1" in result
+        assert "Assets/Orphan1.png" in result
+        assert "Assets/Orphan2.png" in result
+
+    def test_unused_assets_none(self):
+        response = {
+            "status": "success",
+            "unusedAssets": {
+                "unusedAssets": [],
+                "totalAssets": 10,
+                "unusedCount": 0,
+                "roots": [],
+            },
+        }
+        result = format_unused_assets(response, "success", 1.0)
+
+        assert "✓ Unused Assets: 0 (of 10 scanned)" in result
+
+
+class TestFormatTracePath:
+    """Test trace-path response formatting"""
+
+    def test_trace_path_found(self):
+        response = {
+            "status": "success",
+            "tracePath": {
+                "from": "Assets/A.prefab",
+                "to": "Assets/D.fbx",
+                "found": True,
+                "depth": 3,
+                "path": ["Assets/A.prefab", "Assets/B.mat", "Assets/C.png", "Assets/D.fbx"],
+            },
+        }
+        result = format_trace_path(response, "success", 0.4)
+
+        assert "✓ Path found (3 hop(s)) from Assets/A.prefab to Assets/D.fbx" in result
+        assert "Assets/B.mat" in result
+        assert "→ Assets/D.fbx" in result
+
+    def test_trace_path_not_found(self):
+        response = {
+            "status": "success",
+            "tracePath": {
+                "from": "Assets/A.prefab",
+                "to": "Assets/Z.fbx",
+                "found": False,
+                "path": [],
+                "depth": -1,
+            },
+        }
+        result = format_trace_path(response, "success", 0.4)
+
+        assert "✗ No path found from Assets/A.prefab to Assets/Z.fbx" in result
+
+
+class TestFormatSearchAssets:
+    """Test search-assets response formatting"""
+
+    def test_search_assets_success(self):
+        response = {
+            "status": "success",
+            "searchResult": {
+                "query": "Player",
+                "results": ["Assets/Prefabs/Player.prefab", "Assets/Prefabs/PlayerUI.prefab"],
+                "count": 2,
+            },
+        }
+        result = format_search_assets(response, "success", 0.1)
+
+        assert "✓ Search results for 'Player': 2" in result
+        assert "Assets/Prefabs/Player.prefab" in result
+
+    def test_search_assets_empty(self):
+        response = {
+            "status": "success",
+            "searchResult": {"query": "zzz", "results": [], "count": 0},
+        }
+        result = format_search_assets(response, "success", 0.1)
+
+        assert "✓ Search results for 'zzz': 0" in result
+
+
+class TestFormatAssetInfo:
+    """Test get-asset-info response formatting"""
+
+    def test_asset_info_success(self):
+        response = {
+            "status": "success",
+            "assetInfo": {
+                "path": "Assets/Foo.prefab",
+                "guid": "abc123def456",
+                "type": "UnityEngine.GameObject",
+                "sizeBytes": 12345,
+                "directDependencyCount": 3,
+                "dependencyCount": 45,
+            },
+        }
+        result = format_asset_info(response, "success", 0.02)
+
+        assert "✓ Asset: Assets/Foo.prefab" in result
+        assert "GUID: abc123def456" in result
+        assert "Type: UnityEngine.GameObject" in result
+        assert "12.1 KB" in result
+        assert "Direct Dependencies: 3" in result
+        assert "Total Dependencies: 45" in result
 
 
 class TestFormatGenericResponse:

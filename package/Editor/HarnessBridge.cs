@@ -29,7 +29,13 @@ namespace DeepSeekAI.HarnessBridge {
         // These only read EditorApplication state or console logs — they never mutate anything.
         private static readonly HashSet<string> SafeDuringCompileCommands = new HashSet<string> {
             "get-status",
-            "get-console-logs"
+            "get-console-logs",
+            "get-dependencies",
+            "find-references",
+            "find-unused-assets",
+            "trace-path",
+            "search-assets",
+            "get-asset-info"
         };
 
         static HarnessBridge() {
@@ -47,7 +53,13 @@ namespace DeepSeekAI.HarnessBridge {
                 { "play", new PlayCommand(playMode) },
                 { "pause", new PauseCommand(playMode) },
                 { "step", new StepCommand(playMode) },
-                { "build", new BuildCommand() }
+                { "build", new BuildCommand() },
+                { "get-dependencies", new GetDependenciesCommand() },
+                { "find-references", new FindReferencesCommand() },
+                { "find-unused-assets", new FindUnusedAssetsCommand() },
+                { "trace-path", new TracePathCommand() },
+                { "search-assets", new SearchAssetsCommand() },
+                { "get-asset-info", new GetAssetInfoCommand() }
             };
 
             EnsureDirectoryExists();

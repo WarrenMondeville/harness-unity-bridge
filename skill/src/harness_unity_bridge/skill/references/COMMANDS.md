@@ -9,6 +9,16 @@ Complete specification for all Unity Bridge commands, including parameters, resp
 - [refresh](#refresh) - Refresh asset database
 - [get-status](#get-status) - Get editor status
 - [get-console-logs](#get-console-logs) - Retrieve console logs
+- [play](#play) - Toggle Play Mode
+- [pause](#pause) - Toggle pause in Play Mode
+- [step](#step) - Step one frame in Play Mode
+- [build](#build) - Build the project
+- [get-dependencies](#get-dependencies) - List an asset's dependencies
+- [find-references](#find-references) - Find assets that reference an asset
+- [find-unused-assets](#find-unused-assets) - Find unreachable assets
+- [trace-path](#trace-path) - Find a dependency path between two assets
+- [search-assets](#search-assets) - Search assets by name/type
+- [get-asset-info](#get-asset-info) - Show identity + dependency metrics for an asset
 
 ---
 
@@ -656,6 +666,792 @@ harness-unity-bridge get-console-logs --filter Error --limit 10
 
 ---
 
+## play
+
+Toggle Unity Editor Play Mode. If not playing, enters Play Mode; if playing, exits Play Mode.
+
+### Usage
+
+```bash
+harness-unity-bridge play [options]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+**Success:**
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "play",
+  "duration_ms": 10,
+  "editorStatus": {
+    "isCompiling": false,
+    "isUpdating": false,
+    "isPlaying": true,
+    "isPaused": false
+  }
+}
+```
+
+### Formatted Output
+
+**Entering Play Mode:**
+```
+✓ play completed
+Play Mode: ▶ Playing
+Duration: 0.01s
+```
+
+**Exiting Play Mode:**
+```
+✓ play completed
+Play Mode: ⏹ Stopped
+Duration: 0.01s
+```
+
+### Error Scenarios
+
+**Blocked during compilation:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "play",
+  "error": "Unity Editor is currently compiling. Only read-only commands (get-status, get-console-logs) are available. Try again later."
+}
+```
+
+### Notes
+
+- **Toggle behavior:** Acts like the Play button in Unity — toggles between playing and editing
+- **Blocked during compilation:** Cannot enter/exit Play Mode while scripts are compiling
+- **Response includes editorStatus:** Always check the returned `editorStatus` to confirm the resulting state
+- **Domain reload:** Entering/exiting Play Mode may trigger a domain reload, which takes time
+
+### Examples
+
+```bash
+# Enter Play Mode
+harness-unity-bridge play
+
+# Check state after toggling
+harness-unity-bridge get-status
+
+# Exit Play Mode (call again)
+harness-unity-bridge play
+```
+
+---
+
+## pause
+
+Toggle the pause state while in Play Mode. If playing, pauses; if paused, unpauses.
+
+### Usage
+
+```bash
+harness-unity-bridge pause [options]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+**Success:**
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "pause",
+  "duration_ms": 5,
+  "editorStatus": {
+    "isCompiling": false,
+    "isUpdating": false,
+    "isPlaying": true,
+    "isPaused": true
+  }
+}
+```
+
+### Formatted Output
+
+**Pausing:**
+```
+✓ pause completed
+Play Mode: ⏸ Paused
+Duration: 0.01s
+```
+
+**Unpausing:**
+```
+✓ pause completed
+Play Mode: ▶ Playing
+Duration: 0.01s
+```
+
+### Error Scenarios
+
+**Not in Play Mode:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "pause",
+  "error": "Cannot pause: Unity Editor is not in Play Mode. Use 'play' to enter Play Mode first."
+}
+```
+
+Formatted as:
+```
+✗ Error: Cannot pause: Unity Editor is not in Play Mode. Use 'play' to enter Play Mode first.
+```
+
+### Notes
+
+- **Requires Play Mode:** Returns error if not currently in Play Mode
+- **Toggle behavior:** Like the Pause button in Unity
+- **Inspection:** While paused, you can inspect GameObjects and variables in the editor
+
+### Examples
+
+```bash
+# Enter Play Mode, then pause
+harness-unity-bridge play
+harness-unity-bridge pause
+
+# Unpause
+harness-unity-bridge pause
+
+# Check current state
+harness-unity-bridge get-status
+```
+
+---
+
+## step
+
+Step one frame forward in Play Mode. If not paused, Unity will pause first then step.
+
+### Usage
+
+```bash
+harness-unity-bridge step [options]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+**Success:**
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "step",
+  "duration_ms": 20,
+  "editorStatus": {
+    "isCompiling": false,
+    "isUpdating": false,
+    "isPlaying": true,
+    "isPaused": true
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ step completed
+Play Mode: ⏸ Paused
+Duration: 0.02s
+```
+
+### Error Scenarios
+
+**Not in Play Mode:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "step",
+  "error": "Cannot step: Unity Editor is not in Play Mode. Use 'play' to enter Play Mode first."
+}
+```
+
+Formatted as:
+```
+✗ Error: Cannot step: Unity Editor is not in Play Mode. Use 'play' to enter Play Mode first.
+```
+
+### Notes
+
+- **Requires Play Mode:** Returns error if not currently in Play Mode
+- **Auto-pause:** If Unity is playing (not paused), stepping will pause first then advance one frame
+- **Frame-by-frame debugging:** Useful for inspecting state changes one frame at a time
+- **Stays paused:** After stepping, the editor remains paused
+
+### Examples
+
+```bash
+# Enter Play Mode, pause, then step through frames
+harness-unity-bridge play
+harness-unity-bridge pause
+harness-unity-bridge step
+harness-unity-bridge step
+harness-unity-bridge step
+
+# Check state between steps
+harness-unity-bridge get-status
+```
+
+---
+
+## build
+
+Build the Unity project using direct `BuildPipeline.BuildPlayer()` or invoke a custom build method via reflection.
+
+### Usage
+
+```bash
+harness-unity-bridge build [options]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--method` | string | No | None | Fully qualified static method to invoke |
+| `--target` | string | No | Active target | BuildTarget enum name |
+| `--development` | flag | No | False | Enable development build |
+| `--env` | string | No | None | Environment variable KEY=VALUE (repeatable) |
+| `--profile` | string | No | None | Named profile from build.json |
+| `--output` | string | No | Auto | Output path override |
+| `--timeout` | int | No | 300 | Command timeout in seconds |
+
+### Parameter Details
+
+**`--method`**
+- Fully qualified static method name: `Namespace.Class.Method`
+- Invoked via reflection (like Unity's `-executeMethod`)
+- Examples: `DeepSeekAI.Builder.BuildEntryPoints.BuildQuest`, `MyProject.Build.Run`
+
+**`--target`**
+- Unity `BuildTarget` enum name (case-insensitive)
+- Common values: `Android`, `StandaloneWindows64`, `StandaloneOSX`, `iOS`, `WebGL`
+- Defaults to the currently active build target in Unity
+
+**`--env`**
+- Sets environment variables before build method invocation
+- Format: `KEY=VALUE`
+- Repeatable: `--env BUILD_TYPE=production --env BACKEND=il2cpp`
+- Variables are cleaned up after build completes
+
+**`--profile`**
+- Loads a named profile from `.harness-unity-bridge/build.json`
+- Profile provides default method, env, and timeout
+- CLI arguments override profile values
+
+### Response Format
+
+**Success (direct build):**
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "build",
+  "duration_ms": 45200,
+  "buildInfo": {
+    "buildResult": "Succeeded",
+    "totalErrors": 0,
+    "totalWarnings": 3,
+    "totalSeconds": 45.2,
+    "outputPath": "/path/to/Build_Android.apk",
+    "sizeBytes": 52428800,
+    "method": "direct"
+  }
+}
+```
+
+**Success (method build):**
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "build",
+  "duration_ms": 120500,
+  "buildInfo": {
+    "buildResult": "Succeeded",
+    "totalErrors": 0,
+    "totalWarnings": 0,
+    "totalSeconds": 120.5,
+    "outputPath": "",
+    "sizeBytes": 0,
+    "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest"
+  }
+}
+```
+
+**Failure:**
+```json
+{
+  "id": "uuid",
+  "status": "failure",
+  "action": "build",
+  "duration_ms": 30000,
+  "error": "Build Failed: 5 error(s), 2 warning(s)",
+  "buildInfo": {
+    "buildResult": "Failed",
+    "totalErrors": 5,
+    "totalWarnings": 2,
+    "totalSeconds": 30.0,
+    "outputPath": "",
+    "sizeBytes": 0,
+    "method": "direct"
+  }
+}
+```
+
+### Formatted Output
+
+**Success:**
+```
+✓ Build Succeeded
+Errors: 0
+Warnings: 3
+Build Time: 45.2s
+Output: /path/to/Build_Android.apk
+Size: 50.0 MB
+Duration: 45.20s
+```
+
+**Failure:**
+```
+✗ Build Failed
+Errors: 5
+Warnings: 2
+Build Time: 30.0s
+Duration: 30.00s
+
+Build Failed: 5 error(s), 2 warning(s)
+```
+
+### Build Profiles
+
+Create `.harness-unity-bridge/build.json` to define named build profiles:
+
+```json
+{
+  "profiles": {
+    "quest": {
+      "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildQuest",
+      "env": { "BUILD_TYPE": "development" },
+      "timeout": 600
+    },
+    "pico": {
+      "method": "DeepSeekAI.Builder.BuildEntryPoints.BuildPico"
+    }
+  },
+  "default": "quest"
+}
+```
+
+**Profile fields:**
+- `method` (string): Static method to invoke
+- `env` (object): Key-value environment variables
+- `timeout` (int): Override default timeout in seconds
+
+**Profile resolution:**
+1. Load `.harness-unity-bridge/build.json`
+2. Find named profile
+3. Apply profile method, env, timeout as defaults
+4. CLI arguments override profile values
+
+### Error Scenarios
+
+**Invalid build target:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "build",
+  "error": "Invalid build target: 'BadTarget'. Use Unity BuildTarget enum names (e.g., Android, StandaloneWindows64, iOS)."
+}
+```
+
+**No scenes in Build Settings:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "build",
+  "error": "No scenes enabled in Build Settings. Add scenes via File > Build Settings."
+}
+```
+
+**Method not found:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "build",
+  "error": "Static method not found: 'BuildQuest' on type 'DeepSeekAI.Builder.NonExistent'."
+}
+```
+
+**Type not found:**
+```json
+{
+  "id": "uuid",
+  "status": "error",
+  "action": "build",
+  "error": "Type not found: 'DeepSeekAI.Builder.NonExistent'. Ensure the class exists and is in a loaded assembly."
+}
+```
+
+**Profile not found (CLI error):**
+```
+Error: Build profile 'nonexistent' not found. Available profiles: quest, pico
+```
+
+### Notes
+
+- **Default timeout:** 5 minutes (300s) — builds take significantly longer than other commands
+- **Blocking:** Build operations block the Unity Editor main thread. No progress updates or other commands during build
+- **Exit protection:** The bridge hooks `EditorApplication.wantsToQuit` to prevent build methods from closing the editor. Build methods that call `EditorApplication.Exit()` will be blocked
+- **Environment variable:** `UNITY_BRIDGE_BUILD=true` is set before method invocation. Check this in your build code to skip `Exit()` calls when running through the bridge
+- **Direct build defaults:** Uses active build target, enabled scenes from Build Settings, output to `Builds/` directory
+
+### Examples
+
+```bash
+# Direct build with active target
+harness-unity-bridge build
+
+# Direct build for Android
+harness-unity-bridge build --target Android
+
+# Development build
+harness-unity-bridge build --target Android --development
+
+# Custom build method
+harness-unity-bridge build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest
+
+# With environment variables
+harness-unity-bridge build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest \
+  --env BUILD_TYPE=production \
+  --env SCRIPTING_BACKEND=il2cpp
+
+# Using a build profile
+harness-unity-bridge build --profile quest
+
+# Profile with CLI override
+harness-unity-bridge build --profile quest --env BUILD_TYPE=production
+
+# With custom output path
+harness-unity-bridge build --target Android --output ./builds/my-app.apk
+
+# Extended timeout for large builds
+harness-unity-bridge build --method MyProject.Build.Run --timeout 600
+```
+
+---
+
+## get-dependencies
+
+List the assets that a given asset depends on (forward dependency edges).
+
+### Usage
+
+```bash
+harness-unity-bridge get-dependencies --asset <path-or-guid> [--recursive]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--recursive` | flag | No | False | Include transitive dependencies |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "get-dependencies",
+  "duration_ms": 120,
+  "assetDependencies": {
+    "asset": "Assets/Prefabs/Player.prefab",
+    "dependencies": ["Assets/Materials/Player.mat", "Assets/Textures/Player_Diffuse.png"],
+    "count": 2,
+    "recursive": false
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Dependencies (direct) for: Assets/Prefabs/Player.prefab
+Count: 2
+Duration: 0.12s
+
+  - Assets/Materials/Player.mat
+  - Assets/Textures/Player_Diffuse.png
+```
+
+### Error Scenarios
+
+**Missing asset:**
+```json
+{ "status": "error", "action": "get-dependencies", "error": "Missing required parameter: asset (an asset path or GUID)." }
+```
+
+**Asset not found:**
+```json
+{ "status": "error", "action": "get-dependencies", "error": "Asset not found: Assets/Nope.asset" }
+```
+
+---
+
+## find-references
+
+Find the assets that directly reference a given asset (reverse dependency edges). Unity exposes no reverse index, so this scans all project assets.
+
+### Usage
+
+```bash
+harness-unity-bridge find-references --asset <path-or-guid> [--include-packages]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--include-packages` | flag | No | False | Also scan `Packages/` |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "find-references",
+  "duration_ms": 820,
+  "assetReferences": {
+    "asset": "Assets/Materials/Player.mat",
+    "references": ["Assets/Prefabs/Player.prefab", "Assets/Scenes/Main.unity"],
+    "count": 2
+  }
+}
+```
+
+### Notes
+
+- Scans every project asset and checks its direct dependencies, so it can be slow on large projects.
+- Progress is reported via `status: "running"` responses every 200 assets.
+
+---
+
+## find-unused-assets
+
+Find project assets that are unreachable from entry-point roots (enabled build scenes + `Resources/` folders).
+
+### Usage
+
+```bash
+harness-unity-bridge find-unused-assets [--include-packages]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--include-packages` | flag | No | False | Also scan `Packages/` |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "find-unused-assets",
+  "duration_ms": 4300,
+  "unusedAssets": {
+    "unusedAssets": ["Assets/Orphan1.png", "Assets/Orphan2.png"],
+    "totalAssets": 1500,
+    "unusedCount": 2,
+    "roots": ["Assets/Scenes/Main.unity", "Assets/UI/Resources/Button.prefab"]
+  }
+}
+```
+
+### Notes
+
+- Roots are enabled scenes in Build Settings plus every asset under a `Resources/` folder.
+- `.cs`/`.asmdef`/`.asmref` files are excluded — their usage is code-level, not asset-graph-level.
+- Output is *candidates*: dynamic loading (`Resources.Load`, code-driven Addressables strings) is outside the static graph, so verify before deleting.
+
+---
+
+## trace-path
+
+Find the shortest dependency path (breadth-first search) from one asset to another.
+
+### Usage
+
+```bash
+harness-unity-bridge trace-path --from <path-or-guid> --to <path-or-guid> [--max-depth <n>]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--from` | string | Yes | None | Start asset path or GUID |
+| `--to` | string | Yes | None | End asset path or GUID |
+| `--max-depth` | int | No | 20 | Maximum dependency hops to search |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "trace-path",
+  "duration_ms": 240,
+  "tracePath": {
+    "from": "Assets/Scenes/Main.unity",
+    "to": "Assets/Materials/Fx.mat",
+    "path": ["Assets/Scenes/Main.unity", "Assets/Prefabs/Fx.prefab", "Assets/Materials/Fx.mat"],
+    "depth": 2,
+    "found": true
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Path found (2 hop(s)) from Assets/Scenes/Main.unity to Assets/Materials/Fx.mat:
+
+  - Assets/Scenes/Main.unity
+   → Assets/Prefabs/Fx.prefab
+   → Assets/Materials/Fx.mat
+```
+
+When no path exists within `--max-depth`, `found` is `false` and `path` is empty.
+
+---
+
+## search-assets
+
+Search the asset database by name (and optional type filter).
+
+### Usage
+
+```bash
+harness-unity-bridge search-assets --query <query> [--type <type>] [--limit <n>]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--query` | string | Yes | None | Search query (asset name substring) |
+| `--type` | string | No | None | Asset type filter, e.g. `Prefab`, `Texture2D`, `Scene` |
+| `--limit` | int | No | 50 | Maximum number of results |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "search-assets",
+  "duration_ms": 45,
+  "searchResult": {
+    "query": "Player",
+    "results": ["Assets/Prefabs/Player.prefab", "Assets/Prefabs/PlayerUI.prefab"],
+    "count": 2
+  }
+}
+```
+
+---
+
+## get-asset-info
+
+Return identity and dependency metrics for a single asset.
+
+### Usage
+
+```bash
+harness-unity-bridge get-asset-info --asset <path-or-guid>
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "get-asset-info",
+  "duration_ms": 30,
+  "assetInfo": {
+    "path": "Assets/Prefabs/Player.prefab",
+    "guid": "f5a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4",
+    "type": "UnityEngine.GameObject",
+    "sizeBytes": 12345,
+    "directDependencyCount": 3,
+    "dependencyCount": 45
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Asset: Assets/Prefabs/Player.prefab
+  GUID: f5a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4
+  Type: UnityEngine.GameObject
+  Size: 12.1 KB
+  Direct Dependencies: 3
+  Total Dependencies: 45
+  Duration: 0.03s
+```
+
+---
+
 ## Common Patterns
 
 ### Check Compilation Status Before Running Tests
@@ -865,6 +1661,7 @@ If commands frequently timeout:
 | refresh | 0.5-5s | Depends on changed assets |
 | run-tests (EditMode) | 1-30s | Depends on test count |
 | run-tests (PlayMode) | 5-60s+ | Slower due to Play Mode startup |
+| build | 30-600s+ | Depends on project size and target |
 
 ### Optimization Tips
 

@@ -13,6 +13,12 @@ Complete specification for all Unity Bridge commands, including parameters, resp
 - [pause](#pause) - Toggle pause in Play Mode
 - [step](#step) - Step one frame in Play Mode
 - [build](#build) - Build the project
+- [get-dependencies](#get-dependencies) - List an asset's dependencies
+- [find-references](#find-references) - Find assets that reference an asset
+- [find-unused-assets](#find-unused-assets) - Find unreachable assets
+- [trace-path](#trace-path) - Find a dependency path between two assets
+- [search-assets](#search-assets) - Search assets by name/type
+- [get-asset-info](#get-asset-info) - Show identity + dependency metrics for an asset
 
 ---
 
@@ -1161,6 +1167,287 @@ harness-unity-bridge build --target Android --output ./builds/my-app.apk
 
 # Extended timeout for large builds
 harness-unity-bridge build --method MyProject.Build.Run --timeout 600
+```
+
+---
+
+## get-dependencies
+
+List the assets that a given asset depends on (forward dependency edges).
+
+### Usage
+
+```bash
+harness-unity-bridge get-dependencies --asset <path-or-guid> [--recursive]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--recursive` | flag | No | False | Include transitive dependencies |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "get-dependencies",
+  "duration_ms": 120,
+  "assetDependencies": {
+    "asset": "Assets/Prefabs/Player.prefab",
+    "dependencies": ["Assets/Materials/Player.mat", "Assets/Textures/Player_Diffuse.png"],
+    "count": 2,
+    "recursive": false
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Dependencies (direct) for: Assets/Prefabs/Player.prefab
+Count: 2
+Duration: 0.12s
+
+  - Assets/Materials/Player.mat
+  - Assets/Textures/Player_Diffuse.png
+```
+
+### Error Scenarios
+
+**Missing asset:**
+```json
+{ "status": "error", "action": "get-dependencies", "error": "Missing required parameter: asset (an asset path or GUID)." }
+```
+
+**Asset not found:**
+```json
+{ "status": "error", "action": "get-dependencies", "error": "Asset not found: Assets/Nope.asset" }
+```
+
+---
+
+## find-references
+
+Find the assets that directly reference a given asset (reverse dependency edges). Unity exposes no reverse index, so this scans all project assets.
+
+### Usage
+
+```bash
+harness-unity-bridge find-references --asset <path-or-guid> [--include-packages]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--include-packages` | flag | No | False | Also scan `Packages/` |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "find-references",
+  "duration_ms": 820,
+  "assetReferences": {
+    "asset": "Assets/Materials/Player.mat",
+    "references": ["Assets/Prefabs/Player.prefab", "Assets/Scenes/Main.unity"],
+    "count": 2
+  }
+}
+```
+
+### Notes
+
+- Scans every project asset and checks its direct dependencies, so it can be slow on large projects.
+- Progress is reported via `status: "running"` responses every 200 assets.
+
+---
+
+## find-unused-assets
+
+Find project assets that are unreachable from entry-point roots (enabled build scenes + `Resources/` folders).
+
+### Usage
+
+```bash
+harness-unity-bridge find-unused-assets [--include-packages]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--include-packages` | flag | No | False | Also scan `Packages/` |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "find-unused-assets",
+  "duration_ms": 4300,
+  "unusedAssets": {
+    "unusedAssets": ["Assets/Orphan1.png", "Assets/Orphan2.png"],
+    "totalAssets": 1500,
+    "unusedCount": 2,
+    "roots": ["Assets/Scenes/Main.unity", "Assets/UI/Resources/Button.prefab"]
+  }
+}
+```
+
+### Notes
+
+- Roots are enabled scenes in Build Settings plus every asset under a `Resources/` folder.
+- `.cs`/`.asmdef`/`.asmref` files are excluded — their usage is code-level, not asset-graph-level.
+- Output is *candidates*: dynamic loading (`Resources.Load`, code-driven Addressables strings) is outside the static graph, so verify before deleting.
+
+---
+
+## trace-path
+
+Find the shortest dependency path (breadth-first search) from one asset to another.
+
+### Usage
+
+```bash
+harness-unity-bridge trace-path --from <path-or-guid> --to <path-or-guid> [--max-depth <n>]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--from` | string | Yes | None | Start asset path or GUID |
+| `--to` | string | Yes | None | End asset path or GUID |
+| `--max-depth` | int | No | 20 | Maximum dependency hops to search |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "trace-path",
+  "duration_ms": 240,
+  "tracePath": {
+    "from": "Assets/Scenes/Main.unity",
+    "to": "Assets/Materials/Fx.mat",
+    "path": ["Assets/Scenes/Main.unity", "Assets/Prefabs/Fx.prefab", "Assets/Materials/Fx.mat"],
+    "depth": 2,
+    "found": true
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Path found (2 hop(s)) from Assets/Scenes/Main.unity to Assets/Materials/Fx.mat:
+
+  - Assets/Scenes/Main.unity
+   → Assets/Prefabs/Fx.prefab
+   → Assets/Materials/Fx.mat
+```
+
+When no path exists within `--max-depth`, `found` is `false` and `path` is empty.
+
+---
+
+## search-assets
+
+Search the asset database by name (and optional type filter).
+
+### Usage
+
+```bash
+harness-unity-bridge search-assets --query <query> [--type <type>] [--limit <n>]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--query` | string | Yes | None | Search query (asset name substring) |
+| `--type` | string | No | None | Asset type filter, e.g. `Prefab`, `Texture2D`, `Scene` |
+| `--limit` | int | No | 50 | Maximum number of results |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "search-assets",
+  "duration_ms": 45,
+  "searchResult": {
+    "query": "Player",
+    "results": ["Assets/Prefabs/Player.prefab", "Assets/Prefabs/PlayerUI.prefab"],
+    "count": 2
+  }
+}
+```
+
+---
+
+## get-asset-info
+
+Return identity and dependency metrics for a single asset.
+
+### Usage
+
+```bash
+harness-unity-bridge get-asset-info --asset <path-or-guid>
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--asset` | string | Yes | None | Asset path or 32-character GUID |
+| `--timeout` | int | No | 30 | Command timeout in seconds |
+
+### Response Format
+
+```json
+{
+  "id": "uuid",
+  "status": "success",
+  "action": "get-asset-info",
+  "duration_ms": 30,
+  "assetInfo": {
+    "path": "Assets/Prefabs/Player.prefab",
+    "guid": "f5a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4",
+    "type": "UnityEngine.GameObject",
+    "sizeBytes": 12345,
+    "directDependencyCount": 3,
+    "dependencyCount": 45
+  }
+}
+```
+
+### Formatted Output
+
+```
+✓ Asset: Assets/Prefabs/Player.prefab
+  GUID: f5a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4
+  Type: UnityEngine.GameObject
+  Size: 12.1 KB
+  Direct Dependencies: 3
+  Total Dependencies: 45
+  Duration: 0.03s
 ```
 
 ---

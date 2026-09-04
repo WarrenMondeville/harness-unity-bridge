@@ -299,6 +299,18 @@ def format_response(response: Dict[str, Any], action: str) -> str:
         return format_play_mode_result(response, status, duration_sec)
     elif action == "build":
         return format_build_results(response, status, duration_sec)
+    elif action == "get-dependencies":
+        return format_dependencies(response, status, duration_sec)
+    elif action == "find-references":
+        return format_references(response, status, duration_sec)
+    elif action == "find-unused-assets":
+        return format_unused_assets(response, status, duration_sec)
+    elif action == "trace-path":
+        return format_trace_path(response, status, duration_sec)
+    elif action == "search-assets":
+        return format_search_assets(response, status, duration_sec)
+    elif action == "get-asset-info":
+        return format_asset_info(response, status, duration_sec)
     else:
         # Generic formatting
         return format_generic_response(response, status, duration_sec)
@@ -498,6 +510,147 @@ def format_build_results(response: Dict[str, Any], status: str, duration: float)
         error_msg = response.get("error", "")
         if error_msg:
             lines.append(f"\n{error_msg}")
+
+    return "\n".join(lines)
+
+
+def format_dependencies(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format get-dependencies response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("assetDependencies", {})
+    asset = data.get("asset", "unknown")
+    recursive = data.get("recursive", False)
+    dependencies = data.get("dependencies", [])
+    count = data.get("count", len(dependencies))
+    mode = "recursive" if recursive else "direct"
+
+    lines = [f"✓ Dependencies ({mode}) for: {asset}"]
+    lines.append(f"Count: {count}")
+    lines.append(f"Duration: {duration:.2f}s")
+
+    if dependencies:
+        lines.append("")
+        for dep in dependencies:
+            lines.append(f"  - {dep}")
+
+    return "\n".join(lines)
+
+
+def format_references(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format find-references response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("assetReferences", {})
+    asset = data.get("asset", "unknown")
+    references = data.get("references", [])
+    count = data.get("count", len(references))
+
+    lines = [f"✓ References to: {asset}"]
+    lines.append(f"Count: {count}")
+    lines.append(f"Duration: {duration:.2f}s")
+
+    if references:
+        lines.append("")
+        for ref in references:
+            lines.append(f"  - {ref}")
+
+    return "\n".join(lines)
+
+
+def format_unused_assets(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format find-unused-assets response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("unusedAssets", {})
+    unused = data.get("unusedAssets", [])
+    total = data.get("totalAssets", 0)
+    unused_count = data.get("unusedCount", len(unused))
+    roots = data.get("roots", [])
+
+    lines = [f"✓ Unused Assets: {unused_count} (of {total} scanned)"]
+    lines.append(f"Roots used: {len(roots)}")
+    lines.append(f"Duration: {duration:.2f}s")
+
+    if unused:
+        lines.append("")
+        for asset in unused:
+            lines.append(f"  - {asset}")
+
+    return "\n".join(lines)
+
+
+def format_trace_path(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format trace-path response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("tracePath", {})
+    from_asset = data.get("from", "unknown")
+    to_asset = data.get("to", "unknown")
+    found = data.get("found", False)
+    path = data.get("path", [])
+    depth = data.get("depth", -1)
+
+    if found:
+        lines = [f"✓ Path found ({depth} hop(s)) from {from_asset} to {to_asset}:"]
+        lines.append("")
+        for i, node in enumerate(path):
+            prefix = "   → " if i > 0 else "  - "
+            lines.append(f"{prefix}{node}")
+        lines.append("")
+        lines.append(f"Duration: {duration:.2f}s")
+    else:
+        lines = [f"✗ No path found from {from_asset} to {to_asset}"]
+        lines.append(f"Duration: {duration:.2f}s")
+
+    return "\n".join(lines)
+
+
+def format_search_assets(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format search-assets response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("searchResult", {})
+    query = data.get("query", "")
+    results = data.get("results", [])
+    count = data.get("count", len(results))
+
+    lines = [f"✓ Search results for '{query}': {count}"]
+    lines.append(f"Duration: {duration:.2f}s")
+
+    if results:
+        lines.append("")
+        for asset in results:
+            lines.append(f"  - {asset}")
+
+    return "\n".join(lines)
+
+
+def format_asset_info(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format get-asset-info response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("assetInfo", {})
+    path = data.get("path", "unknown")
+    guid = data.get("guid", "")
+    type_name = data.get("type", "Unknown")
+    size_bytes = data.get("sizeBytes", 0)
+    direct = data.get("directDependencyCount", 0)
+    total = data.get("dependencyCount", 0)
+
+    lines = [f"✓ Asset: {path}"]
+    lines.append(f"  GUID: {guid}")
+    lines.append(f"  Type: {type_name}")
+    lines.append(f"  Size: {_format_bytes(size_bytes)}")
+    lines.append(f"  Direct Dependencies: {direct}")
+    lines.append(f"  Total Dependencies: {total}")
+    lines.append(f"  Duration: {duration:.2f}s")
 
     return "\n".join(lines)
 
@@ -971,6 +1124,12 @@ Unity Commands:
   pause              Toggle pause (while in Play Mode)
   step               Step one frame (while in Play Mode)
   build              Build project (direct or custom method)
+  get-dependencies   List assets an asset depends on
+  find-references    List assets that reference an asset
+  find-unused-assets Find assets nothing reachable references
+  trace-path         Find a dependency path between two assets
+  search-assets      Search assets by name/type
+  get-asset-info     Show identity + dependency metrics for an asset
   health-check       Verify Unity Bridge setup
 
 Skill Commands:
@@ -991,6 +1150,12 @@ Examples:
   %(prog)s build --target Android --development
   %(prog)s build --method DeepSeekAI.Builder.BuildEntryPoints.BuildQuest
   %(prog)s build --profile quest
+  %(prog)s get-dependencies --asset Assets/Foo.prefab --recursive
+  %(prog)s find-references --asset Assets/Foo.mat
+  %(prog)s find-unused-assets
+  %(prog)s trace-path --from Assets/A.prefab --to Assets/D.fbx
+  %(prog)s search-assets --query "Player" --type Prefab --limit 20
+  %(prog)s get-asset-info --asset Assets/Foo.prefab
   %(prog)s health-check
   %(prog)s install-skill
         """,
@@ -1008,6 +1173,12 @@ Examples:
             "pause",
             "step",
             "build",
+            "get-dependencies",
+            "find-references",
+            "find-unused-assets",
+            "trace-path",
+            "search-assets",
+            "get-asset-info",
             "health-check",
             "install-skill",
             "uninstall-skill",
@@ -1058,6 +1229,45 @@ Examples:
     parser.add_argument(
         "--output",
         help="Build output path override (for build)",
+    )
+
+    # Asset dependency analysis options
+    parser.add_argument(
+        "--asset",
+        help="Asset path or GUID (for get-dependencies, find-references, get-asset-info)",
+    )
+    parser.add_argument(
+        "--recursive",
+        action="store_true",
+        help="Include transitive dependencies (for get-dependencies)",
+    )
+    parser.add_argument(
+        "--from",
+        dest="from_asset",
+        help="Start asset path or GUID (for trace-path)",
+    )
+    parser.add_argument(
+        "--to",
+        dest="to_asset",
+        help="End asset path or GUID (for trace-path)",
+    )
+    parser.add_argument(
+        "--max-depth",
+        type=int,
+        help="Maximum dependency hops to search (for trace-path)",
+    )
+    parser.add_argument(
+        "--type",
+        help="Asset type filter, e.g. 'Prefab' or 'Texture2D' (for search-assets)",
+    )
+    parser.add_argument(
+        "--query",
+        help="Search query (for search-assets)",
+    )
+    parser.add_argument(
+        "--include-packages",
+        action="store_true",
+        help="Include Packages/ in scans (for find-references, find-unused-assets)",
     )
 
     # General options
@@ -1166,6 +1376,42 @@ Examples:
         # Handle --env args when no profile or profile didn't set env
         if args.env and "env" not in params:
             params["env"] = ";".join(args.env)
+
+    elif args.command == "get-dependencies":
+        if args.asset:
+            params["asset"] = args.asset
+        if args.recursive:
+            params["recursive"] = "true"
+
+    elif args.command == "find-references":
+        if args.asset:
+            params["asset"] = args.asset
+        if args.include_packages:
+            params["includePackages"] = "true"
+
+    elif args.command == "find-unused-assets":
+        if args.include_packages:
+            params["includePackages"] = "true"
+
+    elif args.command == "trace-path":
+        if args.from_asset:
+            params["from"] = args.from_asset
+        if args.to_asset:
+            params["to"] = args.to_asset
+        if args.max_depth is not None:
+            params["maxDepth"] = str(args.max_depth)
+
+    elif args.command == "search-assets":
+        if args.query:
+            params["query"] = args.query
+        if args.type:
+            params["type"] = args.type
+        if args.limit is not None:
+            params["limit"] = str(args.limit)
+
+    elif args.command == "get-asset-info":
+        if args.asset:
+            params["asset"] = args.asset
 
     # Execute command
     try:
