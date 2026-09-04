@@ -5,6 +5,41 @@ All notable changes to the Harness Unity Bridge package will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-20
+
+### Added
+
+- `dump-asset` command — dump Inspector-visible serialized field values of a Unity asset
+  (`.prefab`, `.asset`, or `.unity` scene) via `SerializedObject` / `SerializedProperty`:
+  - GameObject hierarchy with per-component field values
+  - MonoBehaviour/ScriptableObject script-name resolution from `m_Script` GUID
+  - Internal-field filtering (via `NextVisible`) and field renaming (`m_LocalPosition` → `localPosition`)
+  - Type-aware value formatting (Vector3, Color, enum names, object references, arrays)
+  - Read-only; remains available while Unity is compiling
+- New `AssetDumpResult` / `GameObjectDump` / `ComponentDump` / `FieldDump` response models
+- Python CLI `dump-asset` subcommand with `--asset` and dump formatter
+- C# command tests + Python formatter tests
+
+### Fixed
+
+- **UTF-8 response decoding**: the CLI read `.harness-unity-bridge` response files with the
+  platform default encoding (GBK on Chinese Windows), which crashed with an "illegal multibyte
+  sequence" error whenever Unity returned non-ASCII field values. Response and build-config
+  reads now explicitly use UTF-8.
+
+## [0.5.0] - 2026-02-19
+
+### Added
+
+- `manage-prefabs` command — prefab management powered by `PrefabUtility`:
+  - `get-info` - prefab metadata (GUID, prefab type, root component types, child count, variant info)
+  - `get-hierarchy` - full prefab hierarchy (name, path, components, nested-prefab nesting info)
+  - `create` - create a prefab asset from a scene GameObject (with inactive search, overwrite, and instance-unlink options)
+- New `PrefabResult` / `PrefabHierarchyItem` response models and `prefabResult` field
+- New `CommandParams` fields for prefab operations (`prefabAction`, `prefabPath`, `objectName`, `searchInactive`, `allowOverwrite`, `unlinkIfInstance`)
+- Python CLI `manage-prefabs` subcommand with `--action`, `--prefab-path`, `--object`, `--search-inactive`, `--allow-overwrite`, `--unlink-if-instance` and prefab formatters
+- C# command tests + Python formatter tests
+
 ## [0.4.0] - 2026-02-18
 
 ### Added
@@ -177,6 +212,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor-only package (no runtime impact)
 - Automatic initialization via `[InitializeOnLoad]`
 
+[0.6.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.6.0
+[0.5.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.5.0
 [0.4.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.4.0
 [0.2.1]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.1
 [0.2.0]: https://github.com/WarrenMondeville/harness-unity-bridge/releases/tag/v0.2.0

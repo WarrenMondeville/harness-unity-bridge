@@ -27,6 +27,8 @@ The Unity Bridge enables DeepSeek Harness to trigger operations in a running Uni
 - Control Play Mode (play, pause, step)
 - Build projects (direct or custom pipeline)
 - Asset dependency analysis (dependencies, references, unused assets, path tracing, search, asset info)
+- Prefab management (inspect metadata, dump hierarchy, create from scene)
+- Asset inspector dump (Inspector-visible serialized field values of prefabs, assets, and scenes)
 
 **Multi-Project Support:** Each Unity project has its own `.harness-unity-bridge/` directory, allowing multiple projects to be worked on simultaneously.
 
@@ -352,6 +354,76 @@ Duration: 0.12s
 - `find-references` scans all project assets (Unity has no reverse index); add `--include-packages` to also scan `Packages/`
 - `find-unused-assets` treats enabled build scenes and `Resources/` folders as roots; `.cs`/`.asmdef` files are excluded (their usage is code-level, not asset-graph-level)
 - All six commands are read-only and remain available while Unity is compiling
+
+#### Prefab Management
+
+Inspect prefab metadata, dump its hierarchy, and create prefab assets from scene GameObjects — powered by Unity's `PrefabUtility`.
+
+```bash
+# Prefab metadata (GUID, type, root components, child count, variant info)
+harness-unity-bridge manage-prefabs --action get-info --prefab-path Assets/Prefabs/Player.prefab
+
+# Full prefab hierarchy (names, paths, components, nested-prefab info)
+harness-unity-bridge manage-prefabs --action get-hierarchy --prefab-path Assets/Prefabs/Player.prefab
+
+# Create a prefab asset from a scene GameObject
+harness-unity-bridge manage-prefabs --action create --object Player --prefab-path Assets/Prefabs/Player.prefab
+```
+
+**Output (get-info):**
+```
+✓ Prefab: Assets/Prefabs/Player.prefab
+  GUID: abc123def456...
+  Type: Regular
+  Root: Player
+  Child Objects: 5
+  Root Components (3):
+    - UnityEngine.Transform
+    ...
+```
+
+**Notes:**
+- `create` searches the active scene (or current prefab stage) for the named GameObject; add `--search-inactive` to include inactive objects
+- `--allow-overwrite` replaces an existing prefab at the same path (otherwise a unique path is generated)
+- `--unlink-if-instance` unpacks an existing prefab instance before saving a new prefab
+- `get-info` / `get-hierarchy` are read-only; `create` mutates the asset database
+
+#### Asset Inspector Dump
+
+Dump Inspector-visible serialized field values of a prefab, asset, or scene — powered by `SerializedObject` / `SerializedProperty`, so it always reflects Unity's live data (no text serialization required).
+
+```bash
+# Prefab: full GameObject hierarchy + per-component field values
+harness-unity-bridge dump-asset --asset Assets/Prefabs/BatPF.prefab
+
+# ScriptableObject / other .asset
+harness-unity-bridge dump-asset --asset Assets/Data/SampleData.asset
+
+# Scene (the currently open scene)
+harness-unity-bridge dump-asset --asset Assets/Scenes/Main.unity
+```
+
+**Output (prefab):**
+```
+✓ Asset Dump: Assets/Prefabs/BatPF.prefab (prefab, 3 objects)
+
+BatPF
+  Transform:
+    localPosition: (27.13, -6.38, 0)
+  Rigidbody2D:
+    mass: 3
+    bodyType: Dynamic
+Data
+  EntityData:
+    _entityName: Bat
+    _walkSpeed: 1.5
+```
+
+**Notes:**
+- Outputs only **Inspector-visible** fields (Unity internal fields are filtered automatically)
+- Field names are cleaned (`m_LocalPosition` → `localPosition`); MonoBehaviour/ScriptableObject show their script name
+- Values are type-aware: vectors as `(x, y, z)`, enums as names, object references as asset paths, arrays as `[N items]`
+- `.unity` dumps the **currently open** scene (no scene loading); read-only, available while compiling
 
 ### Advanced Options
 

@@ -19,6 +19,8 @@ Complete specification for all Unity Bridge commands, including parameters, resp
 - [trace-path](#trace-path) - Find a dependency path between two assets
 - [search-assets](#search-assets) - Search assets by name/type
 - [get-asset-info](#get-asset-info) - Show identity + dependency metrics for an asset
+- [manage-prefabs](#manage-prefabs) - Prefab metadata, hierarchy, and create-from-scene
+- [dump-asset](#dump-asset) - Dump Inspector-visible serialized fields of an asset
 
 ---
 
@@ -1448,6 +1450,206 @@ harness-unity-bridge get-asset-info --asset <path-or-guid>
   Direct Dependencies: 3
   Total Dependencies: 45
   Duration: 0.03s
+```
+
+---
+
+## manage-prefabs
+
+Manage Unity prefabs: inspect metadata, dump the hierarchy, and create prefab assets from scene GameObjects.
+
+### Usage
+
+```bash
+harness-unity-bridge manage-prefabs --action <get-info|get-hierarchy|create> [options]
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `--action` | string | Yes | Sub-action: `get-info`, `get-hierarchy`, or `create` |
+| `--prefab-path` | string | get-info/get-hierarchy/create | Prefab asset path, e.g. `Assets/Prefabs/MyPrefab.prefab` |
+| `--object` | string | create | Scene GameObject name to create the prefab from |
+| `--search-inactive` | flag | No | Include inactive objects when searching the scene (create) |
+| `--allow-overwrite` | flag | No | Overwrite an existing prefab at the same path (create) |
+| `--unlink-if-instance` | flag | No | Unlink an existing prefab instance first (create) |
+| `--timeout` | int | No | Command timeout in seconds |
+
+### Actions
+
+**`get-info`** — prefab metadata:
+```json
+{
+  "status": "success",
+  "action": "manage-prefabs",
+  "prefabResult": {
+    "prefabAction": "get-info",
+    "prefabPath": "Assets/Prefabs/Player.prefab",
+    "guid": "abc123...",
+    "prefabType": "Regular",
+    "rootObjectName": "Player",
+    "rootComponentTypes": ["UnityEngine.Transform", "UnityEngine.MeshRenderer"],
+    "childCount": 5,
+    "isVariant": false,
+    "parentPrefab": null
+  }
+}
+```
+
+**`get-hierarchy`** — full hierarchy (flat list with `items`):
+```json
+{
+  "status": "success",
+  "action": "manage-prefabs",
+  "prefabResult": {
+    "prefabAction": "get-hierarchy",
+    "prefabPath": "Assets/Prefabs/Player.prefab",
+    "total": 2,
+    "items": [
+      {
+        "name": "Player", "path": "Player", "activeSelf": true,
+        "childCount": 1, "componentTypes": ["UnityEngine.Transform"],
+        "isPrefabRoot": true, "isNestedRoot": false, "nestingDepth": 0,
+        "assetPath": "Assets/Prefabs/Player.prefab", "parentPath": null
+      }
+    ]
+  }
+}
+```
+
+**`create`** — create a prefab asset from a scene GameObject:
+```json
+{
+  "status": "success",
+  "action": "manage-prefabs",
+  "prefabResult": {
+    "prefabAction": "create",
+    "prefabPath": "Assets/Prefabs/Player.prefab",
+    "rootObjectName": "Player",
+    "instanceId": 12345,
+    "instanceName": "Player",
+    "componentCount": 3,
+    "childCount": 5,
+    "wasUnlinked": false,
+    "wasReplaced": false
+  }
+}
+```
+
+### Error Scenarios
+
+**Missing action:**
+```json
+{ "status": "error", "action": "manage-prefabs", "error": "Unknown or missing prefabAction ''. Valid actions: get-info, get-hierarchy, create." }
+```
+
+**Prefab not found:**
+```json
+{ "status": "error", "action": "manage-prefabs", "error": "No prefab asset found at path 'Assets/Nope.prefab'." }
+```
+
+**Scene GameObject not found (create):**
+```json
+{ "status": "error", "action": "manage-prefabs", "error": "GameObject 'Player' not found in the active scene or prefab stage." }
+```
+
+### Notes
+
+- `create` searches the active scene, then the current prefab stage, for the named GameObject.
+- `create` refuses to overwrite by default — pass `--allow-overwrite` to replace, otherwise a unique path is generated.
+- Creating a prefab from an existing prefab instance requires `--unlink-if-instance`.
+- `get-info` / `get-hierarchy` are read-only; `create` mutates the asset database (not available while Unity is compiling).
+
+---
+
+## dump-asset
+
+Dump Inspector-visible serialized field values of a Unity asset (`.prefab`, `.asset`, or `.unity` scene).
+
+### Usage
+
+```bash
+harness-unity-bridge dump-asset --asset <path>
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `--asset` | string | Yes | Asset path (`.prefab`, `.asset`, or `.unity`) |
+| `--timeout` | int | No | Command timeout in seconds |
+
+### Behavior by File Type
+
+| Extension | Source |
+|-----------|--------|
+| `.prefab` | `PrefabUtility.LoadPrefabContents` → GameObject hierarchy |
+| `.asset` | `AssetDatabase.LoadMainAssetAtPath` → root object fields |
+| `.unity` | The currently open scene's root GameObjects |
+
+### Response Format
+
+```json
+{
+  "status": "success",
+  "action": "dump-asset",
+  "assetDump": {
+    "asset": "Assets/Prefabs/BatPF.prefab",
+    "assetType": "prefab",
+    "rootName": "BatPF",
+    "gameObjectCount": 2,
+    "gameObjects": [
+      {
+        "name": "BatPF",
+        "path": "BatPF",
+        "active": true,
+        "components": [
+          {
+            "type": "Transform",
+            "fields": [
+              { "name": "localPosition", "value": "(27.13, -6.38, 0)" }
+            ]
+          },
+          {
+            "type": "EntityData",
+            "fields": [
+              { "name": "_entityName", "value": "Bat" },
+              { "name": "_walkSpeed", "value": "1.5" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+For `.asset`, the result uses `components` (root object fields) instead of `gameObjects`.
+
+### Notes
+
+- Only **Inspector-visible** fields are returned (`SerializedProperty.NextVisible` filters Unity internals)
+- Field names are cleaned: `m_LocalPosition` → `localPosition`
+- MonoBehaviour/ScriptableObject components show their script name (resolved from `m_Script` GUID) instead of `MonoBehaviour`
+- Values are type-aware: vectors as `(x, y, z)`, enums as display names, object references as asset paths, arrays as `[N items]`
+- Read-only — remains available while Unity is compiling
+
+### Error Scenarios
+
+**Missing asset:**
+```json
+{ "status": "error", "action": "dump-asset", "error": "Missing required parameter: asset (an asset path)." }
+```
+
+**Unsupported type:**
+```json
+{ "status": "error", "action": "dump-asset", "error": "Unsupported asset type '.mat'. Must be .prefab, .asset, or .unity." }
+```
+
+**Scene not open:**
+```json
+{ "status": "error", "action": "dump-asset", "error": "Scene 'Assets/Scenes/Main.unity' is not open. ..." }
 ```
 
 ---

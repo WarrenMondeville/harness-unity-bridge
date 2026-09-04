@@ -47,7 +47,7 @@ def load_build_config(unity_bridge_dir: Path) -> Optional[Dict[str, Any]]:
         return None
 
     try:
-        return json.loads(config_file.read_text())
+        return json.loads(config_file.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, Exception):
         return None
 
@@ -193,7 +193,7 @@ def wait_for_response(command_id: str, timeout: int, verbose: bool = False) -> D
             time.sleep(0.1)
 
             try:
-                response_text = response_file.read_text()
+                response_text = response_file.read_text(encoding="utf-8")
                 result = json.loads(response_text)
                 response_id = result.get("id", "")
                 if response_id != command_id:
@@ -225,7 +225,7 @@ def wait_for_response(command_id: str, timeout: int, verbose: bool = False) -> D
                     )
                 time.sleep(0.2)
                 try:
-                    response_text = response_file.read_text()
+                    response_text = response_file.read_text(encoding="utf-8")
                     result = json.loads(response_text)
                     response_id = result.get("id", "")
                     if response_id != command_id:
@@ -311,6 +311,10 @@ def format_response(response: Dict[str, Any], action: str) -> str:
         return format_search_assets(response, status, duration_sec)
     elif action == "get-asset-info":
         return format_asset_info(response, status, duration_sec)
+    elif action == "manage-prefabs":
+        return format_prefabs(response, status, duration_sec)
+    elif action == "dump-asset":
+        return format_asset_dump(response, status, duration_sec)
     else:
         # Generic formatting
         return format_generic_response(response, status, duration_sec)
@@ -652,6 +656,143 @@ def format_asset_info(response: Dict[str, Any], status: str, duration: float) ->
     lines.append(f"  Total Dependencies: {total}")
     lines.append(f"  Duration: {duration:.2f}s")
 
+    return "\n".join(lines)
+
+
+def format_prefabs(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format manage-prefabs response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("prefabResult", {})
+    sub_action = data.get("prefabAction", "")
+
+    if sub_action == "get-info":
+        return _format_prefab_info(data, duration)
+    if sub_action == "get-hierarchy":
+        return _format_prefab_hierarchy(data, duration)
+    if sub_action == "create":
+        return _format_prefab_create(data, duration)
+
+    return format_generic_response(response, status, duration)
+
+
+def _format_prefab_info(data: Dict[str, Any], duration: float) -> str:
+    path = data.get("prefabPath", "unknown")
+    guid = data.get("guid", "")
+    prefab_type = data.get("prefabType", "Unknown")
+    root_name = data.get("rootObjectName", "")
+    child_count = data.get("childCount", 0)
+    components = data.get("rootComponentTypes", [])
+    is_variant = data.get("isVariant", False)
+    parent = data.get("parentPrefab", "")
+
+    lines = [f"✓ Prefab: {path}"]
+    lines.append(f"  GUID: {guid}")
+    lines.append(f"  Type: {prefab_type}")
+    lines.append(f"  Root: {root_name}")
+    lines.append(f"  Child Objects: {child_count}")
+    lines.append(f"  Root Components ({len(components)}):")
+    for comp in components:
+        lines.append(f"    - {comp}")
+    if is_variant:
+        lines.append(f"  Variant of: {parent or '(unknown)'}")
+    lines.append(f"  Duration: {duration:.2f}s")
+
+    return "\n".join(lines)
+
+
+def _format_prefab_hierarchy(data: Dict[str, Any], duration: float) -> str:
+    path = data.get("prefabPath", "unknown")
+    total = data.get("total", 0)
+    items = data.get("items", [])
+
+    lines = [f"✓ Prefab Hierarchy: {path} ({total} objects)"]
+
+    for item in items:
+        name = item.get("name", "")
+        depth = item.get("nestingDepth", 0)
+        components = item.get("componentTypes", [])
+        comps = ", ".join(components) if components else ""
+        indent = "  " * max(0, item.get("path", "").count("/"))
+        nested = " [nested prefab]" if item.get("isNestedRoot") else ""
+        lines.append(f"{indent}- {name}{nested}")
+        if comps:
+            lines.append(f"{indent}    ({comps})")
+
+    lines.append(f"Duration: {duration:.2f}s")
+    return "\n".join(lines)
+
+
+def _format_prefab_create(data: Dict[str, Any], duration: float) -> str:
+    path = data.get("prefabPath", "unknown")
+    instance_name = data.get("instanceName", "")
+    instance_id = data.get("instanceId", 0)
+    component_count = data.get("componentCount", 0)
+    child_count = data.get("childCount", 0)
+    was_unlinked = data.get("wasUnlinked", False)
+    was_replaced = data.get("wasReplaced", False)
+
+    lines = [f"✓ Prefab created: {path}"]
+    lines.append(f"  Instance: {instance_name} (id {instance_id})")
+    lines.append(f"  Components: {component_count}")
+    lines.append(f"  Child Objects: {child_count}")
+    if was_unlinked:
+        lines.append("  Unlinked from existing prefab instance")
+    if was_replaced:
+        lines.append("  Replaced existing prefab")
+    lines.append(f"  Duration: {duration:.2f}s")
+
+    return "\n".join(lines)
+
+
+def format_asset_dump(response: Dict[str, Any], status: str, duration: float) -> str:
+    """Format dump-asset response"""
+    if status != "success":
+        return format_generic_response(response, status, duration)
+
+    data = response.get("assetDump", {})
+    asset = data.get("asset", "unknown")
+    asset_type = data.get("assetType", "")
+    root_name = data.get("rootName", "")
+    game_objects = data.get("gameObjects", [])
+    components = data.get("components", [])
+
+    if asset_type in ("prefab", "scene"):
+        count = data.get("gameObjectCount", len(game_objects))
+        lines = [f"✓ Asset Dump: {asset} ({asset_type}, {count} objects)"]
+        lines.append("")
+        for go in game_objects:
+            name = go.get("name", "")
+            path = go.get("path", "")
+            depth = path.count("/") if path else 0
+            active = go.get("active", True)
+            indent = "  " * depth
+            mark = "" if active else " [inactive]"
+            lines.append(f"{indent}{name}{mark}")
+            for comp in go.get("components", []):
+                comp_type = comp.get("type", "")
+                lines.append(f"{indent}  {comp_type}:")
+                for field in comp.get("fields", []):
+                    fname = field.get("name", "")
+                    fvalue = field.get("value", "")
+                    lines.append(f"{indent}    {fname}: {fvalue}")
+        lines.append("")
+        lines.append(f"Duration: {duration:.2f}s")
+        return "\n".join(lines)
+
+    # asset (ScriptableObject / other single-object assets)
+    lines = [f"✓ Asset Dump: {asset} ({asset_type})"]
+    lines.append(f"  Type: {root_name}")
+    for comp in components:
+        comp_type = comp.get("type", "")
+        lines.append(f"  {comp_type}:")
+        for field in comp.get("fields", []):
+            fname = field.get("name", "")
+            fvalue = field.get("value", "")
+            lines.append(f"    {fname}: {fvalue}")
+    lines.append("")
+    lines.append(f"Duration: {duration:.2f}s")
     return "\n".join(lines)
 
 
@@ -1130,6 +1271,8 @@ Unity Commands:
   trace-path         Find a dependency path between two assets
   search-assets      Search assets by name/type
   get-asset-info     Show identity + dependency metrics for an asset
+  manage-prefabs     Prefab metadata, hierarchy, and create-from-scene
+  dump-asset         Dump Inspector-visible serialized fields of an asset
   health-check       Verify Unity Bridge setup
 
 Skill Commands:
@@ -1156,6 +1299,10 @@ Examples:
   %(prog)s trace-path --from Assets/A.prefab --to Assets/D.fbx
   %(prog)s search-assets --query "Player" --type Prefab --limit 20
   %(prog)s get-asset-info --asset Assets/Foo.prefab
+  %(prog)s manage-prefabs --action get-info --prefab-path Assets/Prefabs/Foo.prefab
+  %(prog)s manage-prefabs --action get-hierarchy --prefab-path Assets/Prefabs/Foo.prefab
+  %(prog)s manage-prefabs --action create --object MyObject --prefab-path Assets/Prefabs/Foo.prefab
+  %(prog)s dump-asset --asset Assets/Prefabs/Foo.prefab
   %(prog)s health-check
   %(prog)s install-skill
         """,
@@ -1179,6 +1326,8 @@ Examples:
             "trace-path",
             "search-assets",
             "get-asset-info",
+            "manage-prefabs",
+            "dump-asset",
             "health-check",
             "install-skill",
             "uninstall-skill",
@@ -1268,6 +1417,38 @@ Examples:
         "--include-packages",
         action="store_true",
         help="Include Packages/ in scans (for find-references, find-unused-assets)",
+    )
+
+    # Prefab management options
+    parser.add_argument(
+        "--action",
+        dest="sub_action",
+        choices=["get-info", "get-hierarchy", "create"],
+        help="Sub-action (for manage-prefabs)",
+    )
+    parser.add_argument(
+        "--prefab-path",
+        help="Prefab asset path, e.g. 'Assets/Prefabs/MyPrefab.prefab' (for manage-prefabs)",
+    )
+    parser.add_argument(
+        "--object",
+        dest="object_name",
+        help="Scene GameObject name to create a prefab from (for manage-prefabs create)",
+    )
+    parser.add_argument(
+        "--search-inactive",
+        action="store_true",
+        help="Include inactive objects when searching the scene (for manage-prefabs create)",
+    )
+    parser.add_argument(
+        "--allow-overwrite",
+        action="store_true",
+        help="Overwrite an existing prefab (for manage-prefabs create)",
+    )
+    parser.add_argument(
+        "--unlink-if-instance",
+        action="store_true",
+        help="Unlink an existing prefab instance first (for manage-prefabs create)",
     )
 
     # General options
@@ -1410,6 +1591,24 @@ Examples:
             params["limit"] = str(args.limit)
 
     elif args.command == "get-asset-info":
+        if args.asset:
+            params["asset"] = args.asset
+
+    elif args.command == "manage-prefabs":
+        if args.sub_action:
+            params["prefabAction"] = args.sub_action
+        if args.prefab_path:
+            params["prefabPath"] = args.prefab_path
+        if args.object_name:
+            params["objectName"] = args.object_name
+        if args.search_inactive:
+            params["searchInactive"] = "true"
+        if args.allow_overwrite:
+            params["allowOverwrite"] = "true"
+        if args.unlink_if_instance:
+            params["unlinkIfInstance"] = "true"
+
+    elif args.command == "dump-asset":
         if args.asset:
             params["asset"] = args.asset
 

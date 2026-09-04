@@ -23,6 +23,8 @@
 - **Play Mode 控制** — 播放、暂停、单帧步进
 - **构建项目** — 直接构建或调用自定义构建方法
 - **资源依赖分析** — 依赖追踪、引用查找、未使用资源检测、依赖路径追踪、资源搜索、资源信息
+- **预制体管理** — 查看预制体元信息与层级，从场景对象创建预制体
+- **资源字段导出** — 导出预制体/资源/场景的 Inspector 可见序列化字段值
 
 ## 🚀 快速开始
 
@@ -82,6 +84,9 @@ harness-unity-bridge find-unused-assets                                       # 
 harness-unity-bridge trace-path --from Assets/A.prefab --to Assets/D.fbx      # 依赖路径
 harness-unity-bridge search-assets --query "Player" --type Prefab             # 搜索资源
 harness-unity-bridge get-asset-info --asset Assets/Foo.prefab                 # 资源信息
+harness-unity-bridge manage-prefabs --action get-info --prefab-path Assets/Prefabs/Foo.prefab   # 预制体信息
+harness-unity-bridge manage-prefabs --action create --object MyObj --prefab-path Assets/Prefabs/Foo.prefab  # 创建预制体
+harness-unity-bridge dump-asset --asset Assets/Prefabs/Foo.prefab                                           # 导出资源字段
 harness-unity-bridge health-check                  # 检查桥接环境是否就绪
 ```
 

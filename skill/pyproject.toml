@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "harness-unity-bridge"
-version = "0.4.0"
+version = "0.6.0"
 description = "Control Unity Editor from DeepSeek Harness — run tests, compile, get logs, build, and more via a file-based bridge"
 readme = "README.md"
 license = {text = "Apache-2.0"}

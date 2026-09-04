@@ -27,6 +27,8 @@ File-based bridge enabling DeepSeek Harness to trigger Unity Editor operations i
 - **Play Mode Control** — Play, pause, and step through frames
 - **Build** — Direct builds or custom build pipelines
 - **Asset Dependency Analysis** — Dependencies, references, unused assets, path tracing, search, and asset info
+- **Prefab Management** — Inspect prefab metadata and hierarchy, create prefabs from scene objects
+- **Asset Inspector Dump** — Dump Inspector-visible serialized field values of prefabs, assets, and scenes
 
 ## 🚀 Quick Start
 

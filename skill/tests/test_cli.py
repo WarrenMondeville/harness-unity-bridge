@@ -27,6 +27,8 @@ from harness_unity_bridge.cli import (
     format_trace_path,
     format_search_assets,
     format_asset_info,
+    format_prefabs,
+    format_asset_dump,
     format_generic_response,
     write_command,
     wait_for_response,
@@ -869,6 +871,167 @@ class TestFormatAssetInfo:
         assert "12.1 KB" in result
         assert "Direct Dependencies: 3" in result
         assert "Total Dependencies: 45" in result
+
+
+class TestFormatPrefabs:
+    """Test manage-prefabs response formatting"""
+
+    def test_prefabs_get_info(self):
+        response = {
+            "status": "success",
+            "prefabResult": {
+                "prefabAction": "get-info",
+                "prefabPath": "Assets/Prefabs/Player.prefab",
+                "guid": "abc123",
+                "prefabType": "Regular",
+                "rootObjectName": "Player",
+                "childCount": 5,
+                "rootComponentTypes": ["UnityEngine.Transform", "UnityEngine.MeshRenderer"],
+                "isVariant": False,
+            },
+        }
+        result = format_prefabs(response, "success", 0.03)
+
+        assert "✓ Prefab: Assets/Prefabs/Player.prefab" in result
+        assert "GUID: abc123" in result
+        assert "Root: Player" in result
+        assert "Child Objects: 5" in result
+        assert "UnityEngine.Transform" in result
+
+    def test_prefabs_get_hierarchy(self):
+        response = {
+            "status": "success",
+            "prefabResult": {
+                "prefabAction": "get-hierarchy",
+                "prefabPath": "Assets/Prefabs/Player.prefab",
+                "total": 2,
+                "items": [
+                    {"name": "Player", "path": "Player", "componentTypes": ["UnityEngine.Transform"]},
+                    {"name": "Body", "path": "Player/Body", "componentTypes": ["UnityEngine.Transform"]},
+                ],
+            },
+        }
+        result = format_prefabs(response, "success", 0.03)
+
+        assert "✓ Prefab Hierarchy: Assets/Prefabs/Player.prefab (2 objects)" in result
+        assert "- Player" in result
+        assert "Body" in result
+
+    def test_prefabs_create(self):
+        response = {
+            "status": "success",
+            "prefabResult": {
+                "prefabAction": "create",
+                "prefabPath": "Assets/Prefabs/Player.prefab",
+                "instanceName": "Player",
+                "instanceId": 42,
+                "componentCount": 3,
+                "childCount": 5,
+            },
+        }
+        result = format_prefabs(response, "success", 0.5)
+
+        assert "✓ Prefab created: Assets/Prefabs/Player.prefab" in result
+        assert "Instance: Player (id 42)" in result
+        assert "Components: 3" in result
+
+    def test_prefabs_error_falls_back_to_generic(self):
+        response = {
+            "status": "error",
+            "action": "manage-prefabs",
+            "error": "Unknown or missing prefabAction 'x'",
+        }
+        result = format_response(response, "manage-prefabs")
+
+        assert "✗ Error: Unknown or missing prefabAction 'x'" in result
+
+
+class TestFormatAssetDump:
+    """Test dump-asset response formatting"""
+
+    def test_asset_dump_prefab(self):
+        response = {
+            "status": "success",
+            "assetDump": {
+                "asset": "Assets/Prefabs/BatPF.prefab",
+                "assetType": "prefab",
+                "rootName": "BatPF",
+                "gameObjectCount": 2,
+                "gameObjects": [
+                    {
+                        "name": "BatPF",
+                        "path": "BatPF",
+                        "active": True,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "fields": [
+                                    {"name": "localPosition", "value": "(27.13, -6.38, 0)"},
+                                ],
+                            },
+                            {
+                                "type": "Rigidbody2D",
+                                "fields": [{"name": "mass", "value": "3"}],
+                            },
+                        ],
+                    },
+                    {
+                        "name": "Data",
+                        "path": "BatPF/Data",
+                        "active": True,
+                        "components": [
+                            {
+                                "type": "EntityData",
+                                "fields": [{"name": "_entityName", "value": "Bat"}],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+        result = format_asset_dump(response, "success", 0.1)
+
+        assert "✓ Asset Dump: Assets/Prefabs/BatPF.prefab (prefab, 2 objects)" in result
+        assert "BatPF" in result
+        assert "Transform:" in result
+        assert "localPosition: (27.13, -6.38, 0)" in result
+        assert "EntityData:" in result
+        assert "_entityName: Bat" in result
+
+    def test_asset_dump_asset(self):
+        response = {
+            "status": "success",
+            "assetDump": {
+                "asset": "Assets/Data/SampleData.asset",
+                "assetType": "asset",
+                "rootName": "SampleData",
+                "components": [
+                    {
+                        "type": "SampleData",
+                        "fields": [
+                            {"name": "value", "value": "42"},
+                            {"name": "enabled", "value": "true"},
+                        ],
+                    },
+                ],
+            },
+        }
+        result = format_asset_dump(response, "success", 0.1)
+
+        assert "✓ Asset Dump: Assets/Data/SampleData.asset (asset)" in result
+        assert "Type: SampleData" in result
+        assert "value: 42" in result
+        assert "enabled: true" in result
+
+    def test_asset_dump_error_falls_back_to_generic(self):
+        response = {
+            "status": "error",
+            "action": "dump-asset",
+            "error": "Unsupported asset type '.mat'",
+        }
+        result = format_response(response, "dump-asset")
+
+        assert "✗ Error: Unsupported asset type '.mat'" in result
 
 
 class TestFormatGenericResponse:

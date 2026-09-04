@@ -35,7 +35,8 @@ namespace DeepSeekAI.HarnessBridge {
             "find-unused-assets",
             "trace-path",
             "search-assets",
-            "get-asset-info"
+            "get-asset-info",
+            "dump-asset"
         };
 
         static HarnessBridge() {
@@ -59,7 +60,9 @@ namespace DeepSeekAI.HarnessBridge {
                 { "find-unused-assets", new FindUnusedAssetsCommand() },
                 { "trace-path", new TracePathCommand() },
                 { "search-assets", new SearchAssetsCommand() },
-                { "get-asset-info", new GetAssetInfoCommand() }
+                { "get-asset-info", new GetAssetInfoCommand() },
+                { "manage-prefabs", new ManagePrefabsCommand() },
+                { "dump-asset", new DumpAssetCommand() }
             };
 
             EnsureDirectoryExists();

@@ -24,6 +24,12 @@ namespace DeepSeekAI.HarnessBridge.Models {
         public AssetSearchResult searchResult;
         public AssetInfo assetInfo;
 
+        // Prefab management result
+        public PrefabResult prefabResult;
+
+        // Asset inspector dump result
+        public AssetDumpResult assetDump;
+
         public static CommandResponse Running(string id, string action) {
             return new CommandResponse {
                 id = id,
@@ -157,5 +163,72 @@ namespace DeepSeekAI.HarnessBridge.Models {
         public long sizeBytes;            // On-disk file size
         public int directDependencyCount; // Direct dependencies only
         public int dependencyCount;       // Transitive (recursive) dependencies
+    }
+
+    [Serializable]
+    public class PrefabResult {
+        public string prefabAction;           // Sub-action that produced this result
+        public string prefabPath;             // Prefab asset path
+        public string guid;                   // Prefab GUID (get-info)
+        public string prefabType;             // PrefabAssetType name (get-info)
+        public string rootObjectName;         // Root GameObject name (get-info / create)
+        public List<string> rootComponentTypes; // Root component type names (get-info)
+        public int childCount;                // Total child count (get-info / get-hierarchy)
+        public bool isVariant;                // Whether it's a prefab variant (get-info)
+        public string parentPrefab;           // Variant parent asset path (get-info)
+        public int total;                     // Hierarchy item count (get-hierarchy)
+        public List<PrefabHierarchyItem> items; // Hierarchy items (get-hierarchy)
+        public int instanceId;                // Created instance ID (create)
+        public string instanceName;           // Created instance name (create)
+        public int componentCount;            // Component count on created prefab (create)
+        public bool wasUnlinked;              // Whether an instance was unlinked (create)
+        public bool wasReplaced;              // Whether an existing prefab was replaced (create)
+        public string message;                // Human-readable result message
+    }
+
+    [Serializable]
+    public class PrefabHierarchyItem {
+        public string name;                   // GameObject name
+        public int instanceId;                // GameObject instance ID
+        public string path;                   // Full hierarchy path ("Root/Child/Grandchild")
+        public bool activeSelf;               // Whether the GameObject is active
+        public int childCount;                // Direct child count
+        public List<string> componentTypes;   // Component type names
+        public bool isPrefabRoot;             // Whether this is the main prefab root
+        public bool isNestedRoot;             // Whether this is a nested prefab instance root
+        public int nestingDepth;              // Prefab nesting depth (0 = main root)
+        public string assetPath;              // Source prefab asset path
+        public string parentPath;             // Parent prefab asset path (nested)
+    }
+
+    [Serializable]
+    public class AssetDumpResult {
+        public string asset;                      // The queried asset path
+        public string assetType;                  // "prefab" | "asset" | "scene"
+        public string rootName;                   // Root object name
+        public int gameObjectCount;               // Total GameObject count (prefab/scene)
+        public List<GameObjectDump> gameObjects;  // Hierarchy (prefab/scene)
+        public List<ComponentDump> components;    // Root object components (asset)
+        public string message;                    // Human-readable result message
+    }
+
+    [Serializable]
+    public class GameObjectDump {
+        public string name;                       // GameObject name
+        public string path;                       // Full hierarchy path
+        public bool active;                       // Whether activeSelf
+        public List<ComponentDump> components;    // Inspector-visible components
+    }
+
+    [Serializable]
+    public class ComponentDump {
+        public string type;                       // Component type name (script name for MonoBehaviour)
+        public List<FieldDump> fields;            // Inspector-visible serialized fields
+    }
+
+    [Serializable]
+    public class FieldDump {
+        public string name;                       // Cleaned field name ("localPosition")
+        public string value;                      // Formatted value ("(27.13, -6.38, 0)")
     }
 }

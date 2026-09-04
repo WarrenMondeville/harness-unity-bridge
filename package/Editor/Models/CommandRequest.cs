@@ -30,5 +30,13 @@ namespace DeepSeekAI.HarnessBridge.Models {
         public string type;             // Asset type filter, e.g. "Prefab" or "Texture2D" (search-assets)
         public string query;            // Search query (search-assets)
         public string includePackages;  // "true"/"false" - include Packages/ in scans
+
+        // Prefab management params (manage-prefabs command)
+        public string prefabAction;     // Sub-action: "get-info" | "get-hierarchy" | "create"
+        public string prefabPath;       // Prefab asset path (e.g. "Assets/Prefabs/MyPrefab.prefab")
+        public string objectName;       // Scene GameObject name to create the prefab from (create)
+        public string searchInactive;   // "true"/"false" - include inactive objects when searching (create)
+        public string allowOverwrite;   // "true"/"false" - overwrite existing prefab (create)
+        public string unlinkIfInstance; // "true"/"false" - unlink an existing prefab instance first (create)
     }
 }

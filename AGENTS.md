@@ -78,6 +78,10 @@ python3 skill/src/harness_unity_bridge/cli.py find-unused-assets
 python3 skill/src/harness_unity_bridge/cli.py trace-path --from Assets/A.prefab --to Assets/D.fbx
 python3 skill/src/harness_unity_bridge/cli.py search-assets --query "Player" --type Prefab
 python3 skill/src/harness_unity_bridge/cli.py get-asset-info --asset Assets/Foo.prefab
+python3 skill/src/harness_unity_bridge/cli.py manage-prefabs --action get-info --prefab-path Assets/Prefabs/Foo.prefab
+python3 skill/src/harness_unity_bridge/cli.py manage-prefabs --action get-hierarchy --prefab-path Assets/Prefabs/Foo.prefab
+python3 skill/src/harness_unity_bridge/cli.py manage-prefabs --action create --object MyObj --prefab-path Assets/Prefabs/Foo.prefab
+python3 skill/src/harness_unity_bridge/cli.py dump-asset --asset Assets/Prefabs/Foo.prefab
 ```
 
 ### Git Workflow
@@ -570,6 +574,13 @@ python3 skill/src/harness_unity_bridge/cli.py get-console-logs --filter Error
 python3 skill/src/harness_unity_bridge/cli.py get-dependencies --asset Assets/Foo.prefab --recursive
 python3 skill/src/harness_unity_bridge/cli.py find-references --asset Assets/Foo.mat
 python3 skill/src/harness_unity_bridge/cli.py find-unused-assets
+
+# Prefab management
+python3 skill/src/harness_unity_bridge/cli.py manage-prefabs --action get-info --prefab-path Assets/Prefabs/Foo.prefab
+python3 skill/src/harness_unity_bridge/cli.py manage-prefabs --action create --object MyObj --prefab-path Assets/Prefabs/Foo.prefab
+
+# Asset inspector dump
+python3 skill/src/harness_unity_bridge/cli.py dump-asset --asset Assets/Prefabs/Foo.prefab
 
 # Test Python script
 cd skill && pytest tests/test_cli.py -v

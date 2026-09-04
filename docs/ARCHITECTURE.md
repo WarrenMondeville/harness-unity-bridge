@@ -21,7 +21,9 @@ package/                     # Unity package (UPM)
 │   │   ├── FindUnusedAssetsCommand.cs # Unreachable assets
 │   │   ├── TracePathCommand.cs        # Shortest dependency path (BFS)
 │   │   ├── SearchAssetsCommand.cs     # Asset search
-│   │   └── GetAssetInfoCommand.cs     # Single-asset identity/metrics
+│   │   ├── GetAssetInfoCommand.cs     # Single-asset identity/metrics
+│   │   ├── ManagePrefabsCommand.cs    # Prefab metadata/hierarchy/create
+│   │   └── DumpAssetCommand.cs        # Inspector-visible field dump (prefab/asset/scene)
 │   └── Models/
 │       ├── CommandRequest.cs    # Request DTO
 │       └── CommandResponse.cs   # Response DTO
